@@ -1,14 +1,12 @@
 package com.edengardensigiriya.edengarden.controller;
 
+import com.edengardensigiriya.edengarden.dao.DAOFactory;
+import com.edengardensigiriya.edengarden.dao.custom.EmployerDAO;
+import com.edengardensigiriya.edengarden.dao.custom.impl.EmployerDAOImpl;
 import com.edengardensigiriya.edengarden.db.DBConnection;
 import com.edengardensigiriya.edengarden.dto.*;
-import com.edengardensigiriya.edengarden.dto.tm.CustomerTM;
 import com.edengardensigiriya.edengarden.dto.tm.EmployerTM;
-import com.edengardensigiriya.edengarden.model.CustomerModel;
-import com.edengardensigiriya.edengarden.model.EmployerModel;
-import com.edengardensigiriya.edengarden.model.SupplierModel;
-import com.edengardensigiriya.edengarden.model.TransportModel;
-import com.edengardensigiriya.edengarden.util.CrudUtil;
+import com.edengardensigiriya.edengarden.entity.Employer;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -21,7 +19,7 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.sql.SQLException;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -60,17 +58,34 @@ public class EmployerManageFormController {
     public Button addContactBtn1;
     public ComboBox contactCmbBx;
     static String con;
+    EmployerDAO employerDAO= (EmployerDAO) DAOFactory.getDaoFactory().getDAO(DAOFactory.DAOTypes.EMPLOYER);
 
-    public void initialize() throws SQLException {
+    public void initialize() throws SQLException, ClassNotFoundException {
         setCellValueFactory();
         getAllEmployers();
     }
 
-    private void getAllEmployers() throws SQLException {
+    private void getAllEmployers() throws SQLException, ClassNotFoundException {
         ObservableList<EmployerTM> obList = FXCollections.observableArrayList();
-        List<Employer> empList = EmployerModel.getAll();
+        List<EmployerDTO> empList = new ArrayList<>();//employerDAO.getAll();
 
-        for (Employer employer : empList) {
+        for (Employer employer : employerDAO.getAll()) {
+            empList.add(new EmployerDTO(
+                    employer.getEmpId(),
+                    employer.getEmpName(),
+                    employer.getNic(),
+                    employer.getAddress(),
+                    employer.getEmail(),
+                    employer.getContact(),
+                    employer.getDob(),
+                    employer.getGender(),
+                    employer.getJobRole(),
+                    employer.getMonthlySalary(),
+                    employer.getEnteredDate(),
+                    employer.getResignedDate()
+            ));
+        }
+        for (EmployerDTO employer : empList) {
             obList.add(new EmployerTM(
                     employer.getEmpId(),
                     employer.getEmpName(),
@@ -105,10 +120,26 @@ public class EmployerManageFormController {
     public void idSearchOnAction(ActionEvent actionEvent) throws SQLException {
         try {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
-            EmployerModel.contact.clear();
-            List<Employer> empList = EmployerModel.searchEmployer(idTxt.getText());
+            employerDAO.contact.clear();
+            List<EmployerDTO> empList = new ArrayList<>();
+            for (Employer employer : employerDAO.search(idTxt.getText())) {
+                empList.add(new EmployerDTO(
+                        employer.getEmpId(),
+                        employer.getEmpName(),
+                        employer.getNic(),
+                        employer.getAddress(),
+                        employer.getEmail(),
+                        employer.getContact(),
+                        employer.getDob(),
+                        employer.getGender(),
+                        employer.getJobRole(),
+                        employer.getMonthlySalary(),
+                        employer.getEnteredDate(),
+                        employer.getResignedDate()
+                ));
+            }
             if (!empList.isEmpty()){
-                for (Employer employer : empList) {
+                for (EmployerDTO employer : empList) {
                     nameTxt.setText(employer.getEmpName());
                     nicTxt.setText(employer.getNic());
                     emailTxt.setText(employer.getEmail());
@@ -133,7 +164,7 @@ public class EmployerManageFormController {
                 new Alert(Alert.AlertType.WARNING, "Employer ID Not Found!").showAndWait();
             }
             DBConnection.getInstance().getConnection().commit();
-        } catch (SQLException e) {
+        } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
             DBConnection.getInstance().getConnection().rollback();
         }finally{
@@ -146,9 +177,9 @@ public class EmployerManageFormController {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
             boolean isAffected=false;
             if (isCorrectPattern()){
-                isAffected= EmployerModel.addEmployer(EmployerModel.generateID(), nameTxt.getText(), nicTxt.getText(),
-                        addressTxt.getText(), emailTxt.getText(), String.join(" , ", EmployerModel.contact),dobDtPck.getValue(),
-                        maleRdBtn.isSelected() ? "MALE" : "FEMALE", jobRolTxt.getText(),empSalary.getText(),strtDtDtPck.getValue(),endDtPkr.getValue());
+                isAffected= employerDAO.save(new Employer(employerDAO.newIdGenerate(), nameTxt.getText(), nicTxt.getText(),
+                        addressTxt.getText(), emailTxt.getText(), String.join(" , ", employerDAO.contact),String.valueOf(dobDtPck.getValue()),
+                        maleRdBtn.isSelected() ? "MALE" : "FEMALE", jobRolTxt.getText(),empSalary.getText(),String.valueOf(strtDtDtPck.getValue()),String.valueOf(endDtPkr.getValue())));
             }
             if (isAffected) {
                 new Alert(Alert.AlertType.INFORMATION, "Employer Added!").showAndWait();
@@ -158,7 +189,7 @@ public class EmployerManageFormController {
             } else {
                 new Alert(Alert.AlertType.WARNING, "Re-Check Submitted Details!").showAndWait();
             }
-        } catch (SQLException e) {
+        } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
             DBConnection.getInstance().getConnection().rollback();
         }finally{
@@ -171,9 +202,9 @@ public class EmployerManageFormController {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
             boolean isAffected=false;
             if (isCorrectPattern()){
-                isAffected= EmployerModel.updateEmployer(idTxt.getText(), nameTxt.getText(), nicTxt.getText(),
-                        addressTxt.getText(), emailTxt.getText(), String.join(" , ", EmployerModel.contact),dobDtPck.getValue(),
-                        maleRdBtn.isSelected() ? "MALE" : "FEMALE", jobRolTxt.getText(),empSalary.getText(),strtDtDtPck.getValue(),endDtPkr.getValue());
+                isAffected= employerDAO.update(new Employer(idTxt.getText(), nameTxt.getText(), nicTxt.getText(),
+                        addressTxt.getText(), emailTxt.getText(), String.join(" , ", employerDAO.contact),String.valueOf(dobDtPck.getValue()),
+                        maleRdBtn.isSelected() ? "MALE" : "FEMALE", jobRolTxt.getText(),empSalary.getText(),String.valueOf(strtDtDtPck.getValue()),String.valueOf(endDtPkr.getValue())));
             }
             if (isAffected) {
                 new Alert(Alert.AlertType.INFORMATION, "Employer Updated!").showAndWait();
@@ -184,14 +215,14 @@ public class EmployerManageFormController {
             } else {
                 new Alert(Alert.AlertType.WARNING, "Re-Check Submitted Details!").showAndWait();
             }
-        } catch (SQLException e) {
+        } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
             DBConnection.getInstance().getConnection().rollback();
         }finally{
             DBConnection.getInstance().getConnection().setAutoCommit(true);
         }
     }
-    public void resetPage() throws SQLException {
+    public void resetPage() throws SQLException, ClassNotFoundException {
         idTxt.setText("");
         nameTxt.setText("");
         nicTxt.setText("");
@@ -201,7 +232,7 @@ public class EmployerManageFormController {
         emailTxt.setText("");
         jobRolTxt.setText("");
         empSalary.setText("");
-        EmployerModel.contact.clear();
+        employerDAO.contact.clear();
         setCellValueFactory();
         getAllEmployers();
     }
@@ -212,7 +243,7 @@ public class EmployerManageFormController {
         ObservableList<String> cont = FXCollections.observableList(conList);
         int length=contacts.length;
         while (length>0){
-            EmployerModel.contact.add(contacts[length-1]);
+            employerDAO.contact.add(contacts[length-1]);
             length-=1;
         }
         return cont;
@@ -221,15 +252,15 @@ public class EmployerManageFormController {
     public void addContactOnAction(ActionEvent actionEvent) {
         System.out.println(con);
         if (contactCmbBx.getItems().contains(con)) {
-            EmployerModel.contact.remove(con);
+            employerDAO.contact.remove(con);
         }
         //System.out.println("con:   "/*+contactTxt.getText()*/);
         if (RegExPatterns.getMobilePattern().matcher(contactTxt.getText()).matches()){
-            boolean isAlreadyHas = EmployerModel.addContact(contactTxt.getText());
+            boolean isAlreadyHas = employerDAO.addContact(contactTxt.getText());
             if (!isAlreadyHas) {
                 new Alert(Alert.AlertType.WARNING, "Contact Already Added!").showAndWait();
             } else {
-                ObservableList<String> cont = FXCollections.observableList(EmployerModel.contact);
+                ObservableList<String> cont = FXCollections.observableList(employerDAO.contact);
                 contactCmbBx.setItems(cont);
                 contactCmbBx.setValue("Contact List");
                 contactTxt.setText("");
@@ -244,7 +275,9 @@ public class EmployerManageFormController {
         con = contactTxt.getText();
     }
     private boolean isCorrectPattern(){
-        if (RegExPatterns.getNamePattern().matcher(nameTxt.getText()).matches()  && (RegExPatterns.getIdPattern().matcher(nicTxt.getText()).matches() ||RegExPatterns.getOldIDPattern().matcher(nicTxt.getText()).matches() ) && RegExPatterns.getAddressPattern().matcher(addressTxt.getText()).matches() && RegExPatterns.getDoublePattern().matcher(empSalary.getText()).matches() && RegExPatterns.getEmailPattern().matcher(emailTxt.getText()).matches()){
+        if (RegExPatterns.getNamePattern().matcher(nameTxt.getText()).matches()  && (RegExPatterns.getIdPattern().matcher(nicTxt.getText()).matches()
+                ||RegExPatterns.getOldIDPattern().matcher(nicTxt.getText()).matches() ) && RegExPatterns.getAddressPattern().matcher(addressTxt.getText()).matches()
+                && RegExPatterns.getDoublePattern().matcher(empSalary.getText()).matches() && RegExPatterns.getEmailPattern().matcher(emailTxt.getText()).matches()){
             return true;
         }
         return false;
@@ -252,7 +285,7 @@ public class EmployerManageFormController {
     public void sendMail(String status) throws MessagingException, GeneralSecurityException, IOException, SQLException {
         SendEmail.sendMail(emailTxt.getText(),
                 (status.equals("Add")?"Register As Employer!":"Update Employer Details!"),
-                "Your Employer ID:"+(status.equals("Add")? EmployerModel.getEmpId():idTxt.getText())+"\nName:"+nameTxt.getText()+
+                "Your Employer ID:"+(status.equals("Add")? employerDAO.getEmpId():idTxt.getText())+"\nName:"+nameTxt.getText()+
                         "\nNIC: "+ nicTxt.getText()+"\nJob Role: "+ jobRolTxt.getText()+"\nService Start From:"+strtDtDtPck.getValue()+"\nService End:"+endDtPkr.getValue()+
                         "\n"+(status.equals("Add")?"Registered As Supplier Successfully!":"Employer Details Update Successfully"+"\n\nThank you!\n\nHotel Eden Garden,\nInamaluwa,\nSeegiriya"));
     }

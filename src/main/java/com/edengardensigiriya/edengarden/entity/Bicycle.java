@@ -1,16 +1,18 @@
-package com.edengardensigiriya.edengarden.dto;
+package com.edengardensigiriya.edengarden.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Setter
 @Getter
 @AllArgsConstructor
-public class Car {
-    private String regNo;
+@NoArgsConstructor
+public class Bicycle {
+    private String bicycleNo;
     private String brand;
-    private String carType;
+    private String bicycleType;
     private String colour;
     private String status;
 }

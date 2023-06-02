@@ -7,10 +7,10 @@ import lombok.Setter;
 @Setter
 @Getter
 @AllArgsConstructor
-public class Bicycle {
-    private String bicycleNo;
+public class CarDTO {
+    private String regNo;
     private String brand;
-    private String bicycleType;
+    private String carType;
     private String colour;
     private String status;
 }

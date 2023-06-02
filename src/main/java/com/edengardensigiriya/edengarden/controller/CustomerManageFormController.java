@@ -1,27 +1,24 @@
 package com.edengardensigiriya.edengarden.controller;
 
+import com.edengardensigiriya.edengarden.dao.DAOFactory;
+import com.edengardensigiriya.edengarden.dao.custom.CustomerDAO;
+import com.edengardensigiriya.edengarden.dao.custom.impl.CustomerDAOImpl;
 import com.edengardensigiriya.edengarden.db.DBConnection;
-import com.edengardensigiriya.edengarden.dto.Customer;
+import com.edengardensigiriya.edengarden.dto.CustomerDTO;
 import com.edengardensigiriya.edengarden.dto.RegExPatterns;
 import com.edengardensigiriya.edengarden.dto.SendEmail;
 import com.edengardensigiriya.edengarden.dto.tm.CustomerTM;
-import com.edengardensigiriya.edengarden.model.BookingModel;
-import com.edengardensigiriya.edengarden.model.CustomerModel;
-import javafx.beans.value.ChangeListener;
+import com.edengardensigiriya.edengarden.entity.Customer;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.AnchorPane;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
 
 import javax.mail.MessagingException;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -52,25 +49,37 @@ public class CustomerManageFormController{
     public Button updateBtn;
     public ComboBox contactCmbBx;
     static String con;
+    CustomerDAO customer= (CustomerDAO) DAOFactory.getDaoFactory().getDAO(DAOFactory.DAOTypes.CUSTOMER);
 
-    public void initialize() throws SQLException {
+    public void initialize() throws SQLException, ClassNotFoundException {
         setCellValueFactory();
         getAllCustomers();
     }
 
-    private void getAllCustomers() throws SQLException {
+    private void getAllCustomers() throws SQLException, ClassNotFoundException {
         ObservableList<CustomerTM> obList = FXCollections.observableArrayList();
-        List<Customer> cusList = CustomerModel.getAll();
+        List<CustomerDTO> cusList = new ArrayList<>();
+        for (Customer cust:customer.getAll()) {
+            cusList.add(new CustomerDTO(
+                    cust.getCustId(),
+                    cust.getCustName(),
+                    cust.getCustNic(),
+                    cust.getCustEmail(),
+                    cust.getCustAddress(),
+                    cust.getCustContact(),
+                    cust.getCustGender()
+            ));
+        }
 
-        for (Customer customer : cusList) {
+        for (CustomerDTO customerDTO : cusList) {
             obList.add(new CustomerTM(
-                    customer.getCustId(),
-                    customer.getCustName(),
-                    customer.getCustNic(),
-                    customer.getCustEmail(),
-                    customer.getCustAddress(),
-                    customer.getCustContact(),
-                    customer.getCustGender()
+                    customerDTO.getCustId(),
+                    customerDTO.getCustName(),
+                    customerDTO.getCustNic(),
+                    customerDTO.getCustEmail(),
+                    customerDTO.getCustAddress(),
+                    customerDTO.getCustContact(),
+                    customerDTO.getCustGender()
             ));
         }
         custTbl.setItems(obList);
@@ -90,16 +99,27 @@ public class CustomerManageFormController{
     public void idSearchOnAction(ActionEvent actionEvent) throws SQLException {
         try {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
-            CustomerModel.contact.clear();
-            List<Customer> cusList = CustomerModel.searchCustomer(idTxt.getText());
+            customer.contact.clear();
+            List<CustomerDTO> cusList = new ArrayList<>();
+            for (Customer cust:customer.search(idTxt.getText())) {
+                cusList.add(new CustomerDTO(
+                        cust.getCustId(),
+                        cust.getCustName(),
+                        cust.getCustNic(),
+                        cust.getCustEmail(),
+                        cust.getCustAddress(),
+                        cust.getCustContact(),
+                        cust.getCustGender()
+                ));
+            }
             if (!cusList.isEmpty()){
-                for (Customer customer : cusList) {
-                    nameTxt.setText(customer.getCustName());
-                    nicTxt.setText(customer.getCustNic());
-                    emailTxt.setText(customer.getCustEmail());
-                    addressTxt.setText(customer.getCustAddress());
-                    contactCmbBx.setItems(getContactObList(customer.getCustContact()));
-                    if (customer.getCustGender().equals("MALE")){
+                for (CustomerDTO customerDTO : cusList) {
+                    nameTxt.setText(customerDTO.getCustName());
+                    nicTxt.setText(customerDTO.getCustNic());
+                    emailTxt.setText(customerDTO.getCustEmail());
+                    addressTxt.setText(customerDTO.getCustAddress());
+                    contactCmbBx.setItems(getContactObList(customerDTO.getCustContact()));
+                    if (customerDTO.getCustGender().equals("MALE")){
                         maleRdBtn.setSelected(true);
                     }else{
                         femaleRdBtn.setSelected(true);
@@ -110,7 +130,7 @@ public class CustomerManageFormController{
                 new Alert(Alert.AlertType.WARNING, "Customer Not Found!").showAndWait();
             }
             DBConnection.getInstance().getConnection().commit();
-        } catch (SQLException e) {
+        } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
             DBConnection.getInstance().getConnection().rollback();
         }finally{
@@ -124,7 +144,7 @@ public class CustomerManageFormController{
         ObservableList<String> cont = FXCollections.observableList(conList);
         int length=contacts.length;
         while (length>0){
-            CustomerModel.contact.add(contacts[length-1]);
+            customer.contact.add(contacts[length-1]);
             length-=1;
         }
         return cont;
@@ -132,14 +152,14 @@ public class CustomerManageFormController{
 
     public void addContactOnAction(ActionEvent actionEvent) {
         if (contactCmbBx.getItems().contains(con)) {
-            CustomerModel.contact.remove(con);
+            customer.contact.remove(con);
         }
         if (RegExPatterns.getMobilePattern().matcher(contactTxt.getText()).matches()){
-            boolean isAlreadyHas = CustomerModel.addContact(contactTxt.getText());
+            boolean isAlreadyHas = customer.addContact(contactTxt.getText());
             if (!isAlreadyHas) {
                 new Alert(Alert.AlertType.WARNING, "Contact Already Added!").showAndWait();
             } else {
-                ObservableList<String> cont = FXCollections.observableList(CustomerModel.contact);
+                ObservableList<String> cont = FXCollections.observableList(customer.contact);
                 contactCmbBx.setItems(cont);
                 contactCmbBx.setValue("Contact List");
                 contactTxt.setText("");
@@ -155,10 +175,9 @@ public class CustomerManageFormController{
             DBConnection.getInstance().getConnection().setAutoCommit(false);
             boolean isAffected=false;
             if (isCorrectPattern()){
-                System.out.println(123);
-                isAffected = CustomerModel.addCustomer(CustomerModel.generateID(),
-                        nameTxt.getText(), nicTxt.getText(), addressTxt.getText(), emailTxt.getText(), String.join(" , ", CustomerModel.contact),
-                        maleRdBtn.isSelected() ? "MALE" : "FEMALE");
+                isAffected = customer.save(new Customer(customer.newIdGenerate(),
+                        nameTxt.getText(), nicTxt.getText(), addressTxt.getText(), emailTxt.getText(), String.join(" , ", customer.contact),
+                        maleRdBtn.isSelected() ? "MALE" : "FEMALE"));
             }
             if (isAffected) {
                 System.out.println(456);
@@ -170,7 +189,7 @@ public class CustomerManageFormController{
                 System.out.println(789);
                 new Alert(Alert.AlertType.WARNING, "Re-Check Submitted Details!").showAndWait();
             }
-        } catch (SQLException e) {
+        } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
             DBConnection.getInstance().getConnection().rollback();
         }finally{
@@ -183,9 +202,9 @@ public class CustomerManageFormController{
             DBConnection.getInstance().getConnection().setAutoCommit(false);
             boolean isAffected =false;
             if (isCorrectPattern()){
-                isAffected = CustomerModel.updateCustomer(idTxt.getText(),
-                        nameTxt.getText(), nicTxt.getText(), addressTxt.getText(), emailTxt.getText(), String.join(" , ", CustomerModel.contact),
-                        maleRdBtn.isSelected() ? "MALE" : "FEMALE");
+                isAffected = customer.update(new Customer(idTxt.getText(),
+                        nameTxt.getText(), nicTxt.getText(), addressTxt.getText(), emailTxt.getText(), String.join(" , ", customer.contact),
+                        maleRdBtn.isSelected() ? "MALE" : "FEMALE"));
             }
             if (isAffected) {
                 new Alert(Alert.AlertType.INFORMATION, "Customer Updated!").showAndWait();
@@ -195,7 +214,7 @@ public class CustomerManageFormController{
             } else {
                 new Alert(Alert.AlertType.WARNING, "Re-Check Submitted Details!").showAndWait();
             }
-        } catch (SQLException e) {
+        } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
             DBConnection.getInstance().getConnection().rollback();
         }finally{
@@ -203,7 +222,7 @@ public class CustomerManageFormController{
         }
     }
 
-    private void resetPage() throws SQLException {
+    private void resetPage() throws SQLException, ClassNotFoundException {
         setCellValueFactory();
         getAllCustomers();
         idTxt.setText("");
@@ -213,7 +232,7 @@ public class CustomerManageFormController{
         addressTxt.setText("");
         contactTxt.setText("");
         contactCmbBx.setValue("Contact List");
-        CustomerModel.contact.clear();
+        customer.contact.clear();
     }
 
     public void setTxtBxValueOnAction(ActionEvent actionEvent) {
@@ -228,6 +247,6 @@ public class CustomerManageFormController{
     }
     public void sendMail() throws MessagingException, GeneralSecurityException, IOException {
         SendEmail.sendMail(emailTxt.getText(),"Customer Verification","Dear Customer," +
-                "\nYour Customer ID:"+CustomerModel.getCustId()+"\nName:"+nameTxt.getText()+"\nRegistered time: "+ LocalDateTime.now()+"\n\nThank you for using our service!\n\nHotel Eden Garden,\nInamaluwa,\nSeegiriya");
+                "\nYour Customer ID:"+customer.getCustId()+"\nName:"+nameTxt.getText()+"\nRegistered time: "+ LocalDateTime.now()+"\n\nThank you for using our service!\n\nHotel Eden Garden,\nInamaluwa,\nSeegiriya");
     }
 }

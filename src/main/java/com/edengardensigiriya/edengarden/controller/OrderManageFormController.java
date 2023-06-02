@@ -1,9 +1,12 @@
 package com.edengardensigiriya.edengarden.controller;
 
+import com.edengardensigiriya.edengarden.dao.DAOFactory;
+import com.edengardensigiriya.edengarden.dao.custom.ItemDAO;
 import com.edengardensigiriya.edengarden.db.DBConnection;
 import com.edengardensigiriya.edengarden.dto.*;
 import com.edengardensigiriya.edengarden.dto.tm.OrderItemTM;
 import com.edengardensigiriya.edengarden.dto.tm.OrderTM;
+import com.edengardensigiriya.edengarden.entity.Item;
 import com.edengardensigiriya.edengarden.model.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -53,6 +56,7 @@ public class OrderManageFormController {
     public TextField costTxt;
     ObservableList<OrderItemTM> obList = FXCollections.observableArrayList();
     List<OrderItem> data = new ArrayList<>();
+    ItemDAO itemDAO= (ItemDAO) DAOFactory.getDaoFactory().getDAO(DAOFactory.DAOTypes.ITEM);
 
     public void initialize() throws SQLException {
         costTxt.setText("0.00");
@@ -260,7 +264,7 @@ public class OrderManageFormController {
     private void getAllItems() throws SQLException {
         ObservableList<String> obList = FXCollections.observableArrayList();
 
-        for (ItemDescrip orderItm : ItemModel.getAllDescription()) {
+        for (Item orderItm : itemDAO.getAllDescription()) {
             obList.add(
                     orderItm.getItemDescription()
             );

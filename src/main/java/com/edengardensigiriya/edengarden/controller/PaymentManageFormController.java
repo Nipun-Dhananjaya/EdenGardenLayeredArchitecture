@@ -1,10 +1,7 @@
 package com.edengardensigiriya.edengarden.controller;
 
-import com.edengardensigiriya.edengarden.dto.Customer;
 import com.edengardensigiriya.edengarden.dto.Payment;
-import com.edengardensigiriya.edengarden.dto.tm.CustomerTM;
 import com.edengardensigiriya.edengarden.dto.tm.PaymentTM;
-import com.edengardensigiriya.edengarden.model.CustomerModel;
 import com.edengardensigiriya.edengarden.model.PaymentModel;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;

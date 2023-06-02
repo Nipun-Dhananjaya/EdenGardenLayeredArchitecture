@@ -16,9 +16,9 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.edengardensigiriya.edengarden.model.CustomerModel.stringLength;
 
 public class BookingModel {
+    static final int stringLength = 5;
     public static ArrayList<String> deluxeRoomNo = new ArrayList<>();
     public static ArrayList<String> standardRoomNo = new ArrayList<>();
 

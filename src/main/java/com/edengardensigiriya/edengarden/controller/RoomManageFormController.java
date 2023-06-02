@@ -1,13 +1,12 @@
 package com.edengardensigiriya.edengarden.controller;
 
+import com.edengardensigiriya.edengarden.dao.DAOFactory;
+import com.edengardensigiriya.edengarden.dao.custom.RoomDAO;
 import com.edengardensigiriya.edengarden.db.DBConnection;
-import com.edengardensigiriya.edengarden.dto.Employer;
 import com.edengardensigiriya.edengarden.dto.RegExPatterns;
-import com.edengardensigiriya.edengarden.dto.Room;
-import com.edengardensigiriya.edengarden.dto.RoomUpdate;
+import com.edengardensigiriya.edengarden.dto.RoomDTO;
 import com.edengardensigiriya.edengarden.dto.tm.RoomTM;
-import com.edengardensigiriya.edengarden.model.CustomerModel;
-import com.edengardensigiriya.edengarden.model.RoomModel;
+import com.edengardensigiriya.edengarden.entity.Room;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -16,7 +15,6 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.AnchorPane;
 
 import java.sql.SQLException;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -38,9 +36,10 @@ public class RoomManageFormController {
     public TableColumn columnRoomType;
     public static ArrayList<String> roomTypes = new ArrayList<>();
     public static ArrayList<Integer> sleepCount = new ArrayList<>();
+    RoomDAO roomDAO= (RoomDAO) DAOFactory.getDaoFactory().getDAO(DAOFactory.DAOTypes.ROOM);
 
 
-    public void initialize() throws SQLException {
+    public void initialize() throws SQLException, ClassNotFoundException {
         roomTypes.add("Deluxe Room");
         roomTypes.add("Standard Room");
         ObservableList<String> roomType = FXCollections.observableList(roomTypes);
@@ -55,11 +54,20 @@ public class RoomManageFormController {
         getAllRooms();
     }
 
-    private void getAllRooms() throws SQLException {
+    private void getAllRooms() throws SQLException, ClassNotFoundException {
         ObservableList<RoomTM> obList = FXCollections.observableArrayList();
-        List<Room> roomList = RoomModel.getAll();
+        List<RoomDTO> roomList = new ArrayList<>();
+        for (Room room : roomDAO.getAll()) {
+            roomList.add(new RoomDTO(
+                    room.getRoomNo(),
+                    room.getRoomType(),
+                    room.getSleepCount(),
+                    room.getCostPerDay(),
+                    room.getAvailability()
+            ));
+        }
 
-        for (Room room : roomList) {
+        for (RoomDTO room : roomList) {
             obList.add(new RoomTM(
                     room.getRoomNo(),
                     room.getRoomType(),
@@ -82,9 +90,17 @@ public class RoomManageFormController {
     public void roomNoSearchOnAction(ActionEvent actionEvent) throws SQLException {
         try {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
-            List<RoomUpdate> roomList = RoomModel.searchRoom(roomNoTxt.getText());
+            List<Room> roomList = new ArrayList<>();
+            for (Room room : roomDAO.search(roomNoTxt.getText())) {
+                roomList.add(new Room(
+                        room.getRoomNo(),
+                        room.getRoomType(),
+                        room.getSleepCount(),
+                        room.getCostPerDay()
+                ));
+            }
             if (!roomList.isEmpty()){
-                for (RoomUpdate room : roomList) {
+                for (Room room : roomList) {
                     roomNoTxt.setText(room.getRoomNo());
                     roomTypeCmbBx.setValue(room.getRoomType());
                     sleepsCountCmbBx.setValue(room.getSleepCount());
@@ -95,7 +111,7 @@ public class RoomManageFormController {
                 new Alert(Alert.AlertType.WARNING, "Room Not Found!").showAndWait();
             }
             DBConnection.getInstance().getConnection().commit();
-        } catch (SQLException e) {
+        } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
             DBConnection.getInstance().getConnection().rollback();
         }finally{
@@ -111,7 +127,7 @@ public class RoomManageFormController {
             double costPerDay = Double.parseDouble(costTxt.getText());
             boolean isAffected=false;
             if (isCorrectPattern()){
-                isAffected = RoomModel.updateRoom(roomNoTxt.getText(), roomType, sleepCount, costPerDay);
+                isAffected = roomDAO.update(new Room(roomNoTxt.getText(), roomType, String.valueOf(sleepCount), String.valueOf(costPerDay)));
             }
             if (isAffected) {
                 new Alert(Alert.AlertType.INFORMATION, "Room Updated Successfully!").showAndWait();
@@ -121,7 +137,7 @@ public class RoomManageFormController {
             } else {
                 new Alert(Alert.AlertType.WARNING, "Re-Check Submitted Details!").showAndWait();
             }
-        } catch (SQLException e) {
+        } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
             DBConnection.getInstance().getConnection().rollback();
         }finally{
@@ -136,7 +152,7 @@ public class RoomManageFormController {
             if (comfirm.isPresent()){
                 boolean isAffected=false;
                 if (isCorrectPattern()){
-                    isAffected = RoomModel.removeRoom(roomNoTxt.getText());
+                    isAffected = roomDAO.delete(roomNoTxt.getText());
                 }
                 if (isAffected) {
                     new Alert(Alert.AlertType.INFORMATION, "Room Removed Successfully!").showAndWait();
@@ -147,7 +163,7 @@ public class RoomManageFormController {
                     new Alert(Alert.AlertType.WARNING, "Re-Check Submitted Details!").showAndWait();
                 }
             }
-        } catch (SQLException e) {
+        } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
             DBConnection.getInstance().getConnection().rollback();
         }finally{
@@ -163,7 +179,7 @@ public class RoomManageFormController {
             double costPerDay = Double.parseDouble(costTxt.getText());
             boolean isAffected=false;
             if (isCorrectPattern()){
-                isAffected = RoomModel.addRoom(RoomModel.generateID(), roomType, sleepCount, costPerDay);
+                isAffected = roomDAO.save(new Room(roomDAO.newIdGenerate(), roomType, String.valueOf(sleepCount), String.valueOf(costPerDay)));
             }
             if (isAffected) {
                 new Alert(Alert.AlertType.INFORMATION, "Room Added Successfully!").showAndWait();
@@ -173,7 +189,7 @@ public class RoomManageFormController {
                 new Alert(Alert.AlertType.WARNING, "Re-Check Submitted Details!").showAndWait();
             }
 
-        } catch (SQLException e) {
+        } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
             DBConnection.getInstance().getConnection().rollback();
         }finally{
@@ -181,7 +197,7 @@ public class RoomManageFormController {
         }
     }
 
-    public void resetPage() throws SQLException {
+    public void resetPage() throws SQLException, ClassNotFoundException {
         roomNoTxt.setText("");
         roomTypeCmbBx.setValue("Room Type");
         sleepsCountCmbBx.setValue("Sleeps");

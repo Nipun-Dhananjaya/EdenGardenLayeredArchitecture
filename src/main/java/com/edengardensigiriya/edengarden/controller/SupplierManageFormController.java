@@ -1,9 +1,11 @@
 package com.edengardensigiriya.edengarden.controller;
 
+import com.edengardensigiriya.edengarden.dao.DAOFactory;
+import com.edengardensigiriya.edengarden.dao.custom.SupplierDAO;
 import com.edengardensigiriya.edengarden.db.DBConnection;
 import com.edengardensigiriya.edengarden.dto.*;
-import com.edengardensigiriya.edengarden.dto.tm.CustomerTM;
 import com.edengardensigiriya.edengarden.dto.tm.SupplierTM;
+import com.edengardensigiriya.edengarden.entity.Supplier;
 import com.edengardensigiriya.edengarden.model.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -17,6 +19,7 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -46,17 +49,30 @@ public class SupplierManageFormController {
     public TableColumn columnContractEndDate;
     public ComboBox contactCmbBx;
     static String con;
+    SupplierDAO supplierDAO= (SupplierDAO) DAOFactory.getDaoFactory().getDAO(DAOFactory.DAOTypes.SUPPLIER);
 
-    public void initialize() throws SQLException {
+    public void initialize() throws SQLException, ClassNotFoundException {
         setCellValueFactory();
         getAllSuppliers();
     }
 
-    private void getAllSuppliers() throws SQLException {
+    private void getAllSuppliers() throws SQLException, ClassNotFoundException {
         ObservableList<SupplierTM> obList = FXCollections.observableArrayList();
-        List<Supplier> supplierList = SupplierModel.getAll();
+        List<SupplierDTO> supplierList = new ArrayList<>();
+        for (Supplier supplier : supplierDAO.getAll()) {
+            supplierList.add(new SupplierDTO(
+                    supplier.getSuppId(),
+                    supplier.getSuppName(),
+                    supplier.getSuppAddress(),
+                    supplier.getSuppEmail(),
+                    supplier.getSuppContact(),
+                    supplier.getItemType(),
+                    supplier.getContactStartDate(),
+                    supplier.getContactEndDate()
+            ));
+        }
 
-        for (Supplier supplier : supplierList) {
+        for (SupplierDTO supplier : supplierList) {
             obList.add(new SupplierTM(
                     supplier.getSuppId(),
                     supplier.getSuppName(),
@@ -83,10 +99,22 @@ public class SupplierManageFormController {
     public void idSearchOnAction(ActionEvent actionEvent) throws SQLException {
         try {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
-            SupplierModel.contact.clear();
-            List<Supplier> suppList = SupplierModel.searchSupplier(idTxt.getText());
+            supplierDAO.contact.clear();
+            List<SupplierDTO> suppList = new ArrayList<>();
+            for (Supplier supplier : supplierDAO.search(idTxt.getText())) {
+                suppList.add(new SupplierDTO(
+                        supplier.getSuppId(),
+                        supplier.getSuppName(),
+                        supplier.getSuppAddress(),
+                        supplier.getSuppEmail(),
+                        supplier.getSuppContact(),
+                        supplier.getItemType(),
+                        supplier.getContactStartDate(),
+                        supplier.getContactEndDate()
+                ));
+            }
             if (!suppList.isEmpty()){
-                for (Supplier supplier : suppList) {
+                for (SupplierDTO supplier : suppList) {
                     nameTxt.setText(supplier.getSuppName());
                     emailTxt.setText(supplier.getSuppEmail());
                     addressTxt.setText(supplier.getSuppAddress());
@@ -100,7 +128,7 @@ public class SupplierManageFormController {
                 new Alert(Alert.AlertType.WARNING, "Supplier Not Found!").showAndWait();
             }
             DBConnection.getInstance().getConnection().commit();
-        } catch (SQLException e) {
+        } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
             DBConnection.getInstance().getConnection().rollback();
         }finally{
@@ -113,9 +141,9 @@ public class SupplierManageFormController {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
             boolean isAffected=false;
             if (isCorrectPattern()){
-                isAffected = SupplierModel.addSupplier(SupplierModel.generateID(),
-                        nameTxt.getText(), addressTxt.getText(), emailTxt.getText(), String.join(" , ", SupplierModel.contact),
-                        itemTypeTxt.getText(),startDtPckr.getValue(),endDtPckr.getValue());
+                isAffected = supplierDAO.save(new Supplier(supplierDAO.newIdGenerate(),
+                        nameTxt.getText(), addressTxt.getText(), emailTxt.getText(), String.join(" , ", supplierDAO.contact),
+                        itemTypeTxt.getText(),String.valueOf(startDtPckr.getValue()),String.valueOf(endDtPckr.getValue())));
             }
             if (isAffected) {
                 new Alert(Alert.AlertType.INFORMATION, "Supplier Added!").showAndWait();
@@ -125,7 +153,7 @@ public class SupplierManageFormController {
             } else {
                 new Alert(Alert.AlertType.WARNING, "Re-Check Submitted Details!").showAndWait();
             }
-        } catch (SQLException e) {
+        } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
             DBConnection.getInstance().getConnection().rollback();
         }finally{
@@ -138,9 +166,9 @@ public class SupplierManageFormController {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
             boolean isAffected=false;
             if (isCorrectPattern()){
-                isAffected = SupplierModel.updateSupplier(idTxt.getText(),
-                        nameTxt.getText(), addressTxt.getText(), emailTxt.getText(), String.join(" , ", SupplierModel.contact),
-                        itemTypeTxt.getText(),startDtPckr.getValue(),endDtPckr.getValue());
+                isAffected = supplierDAO.update(new Supplier(idTxt.getText(),
+                        nameTxt.getText(), addressTxt.getText(), emailTxt.getText(), String.join(" , ", supplierDAO.contact),
+                        itemTypeTxt.getText(),String.valueOf(startDtPckr.getValue()),String.valueOf(endDtPckr.getValue())));
             }
             if (isAffected) {
                 new Alert(Alert.AlertType.INFORMATION, "Supplier Updated!").showAndWait();
@@ -151,7 +179,7 @@ public class SupplierManageFormController {
             } else {
                 new Alert(Alert.AlertType.WARNING, "Re-Check Submitted Details!").showAndWait();
             }
-        } catch (SQLException e) {
+        } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
             DBConnection.getInstance().getConnection().rollback();
         }finally{
@@ -166,7 +194,7 @@ public class SupplierManageFormController {
             if (comfirm.isPresent()){
                 boolean isAffected=false;
                 if (isCorrectPattern()){
-                    isAffected = SupplierModel.removeSupplier(idTxt.getText());
+                    isAffected = supplierDAO.delete(idTxt.getText());
                 }
                 if (isAffected) {
                     new Alert(Alert.AlertType.INFORMATION, "Supplier Removed!").showAndWait();
@@ -178,20 +206,20 @@ public class SupplierManageFormController {
                     new Alert(Alert.AlertType.WARNING, "Re-Check Submitted Details!").showAndWait();
                 }
             }
-        } catch (SQLException e) {
+        } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
             DBConnection.getInstance().getConnection().rollback();
         }finally{
             DBConnection.getInstance().getConnection().setAutoCommit(true);
         }
     }
-    public void resetPage() throws SQLException {
+    public void resetPage() throws SQLException, ClassNotFoundException {
         idTxt.setText("");
         nameTxt.setText("");
         emailTxt.setText("");
         addressTxt.setText("");
         contactTxt.setText("");
-        SupplierModel.contact.clear();
+        supplierDAO.contact.clear();
         setCellValueFactory();
         getAllSuppliers();
     }
@@ -201,13 +229,13 @@ public class SupplierManageFormController {
         con = contactTxt.getText();
         System.out.println(con);
     }
-    private ObservableList getContactObList(String custContact) {
-        String[] contacts=custContact.split(" , ");
+    private ObservableList getContactObList(String suppContact) {
+        String[] contacts=suppContact.split(" , ");
         List<String> conList = Arrays.asList(contacts);
         ObservableList<String> cont = FXCollections.observableList(conList);
         int length=contacts.length;
         while (length>0){
-            EmployerModel.contact.add(contacts[length-1]);
+            supplierDAO.contact.add(contacts[length-1]);
             length-=1;
         }
         return cont;
@@ -216,14 +244,14 @@ public class SupplierManageFormController {
     public void addContactOnAction(ActionEvent actionEvent) {
         if (contactCmbBx.getItems().contains(con)) {
             System.out.println(" 12: "+con);
-            SupplierModel.contact.remove(con);
+            supplierDAO.contact.remove(con);
         }
         if (RegExPatterns.getMobilePattern().matcher(contactTxt.getText()).matches()){
-            boolean isAlreadyHas = SupplierModel.addContact(contactTxt.getText());
+            boolean isAlreadyHas = supplierDAO.addContact(contactTxt.getText());
             if (!isAlreadyHas) {
                 new Alert(Alert.AlertType.WARNING, "Contact Already Added!").showAndWait();
             } else {
-                ObservableList<String> cont = FXCollections.observableList(SupplierModel.contact);
+                ObservableList<String> cont = FXCollections.observableList(supplierDAO.contact);
                 contactCmbBx.setItems(cont);
                 contactCmbBx.setValue("Contact List");
                 contactTxt.setText("");
@@ -242,7 +270,7 @@ public class SupplierManageFormController {
     public void sendMail(String status) throws MessagingException, GeneralSecurityException, IOException, SQLException {
         SendEmail.sendMail(emailTxt.getText(),
                 (status.equals("Add")?"Register As Supplier!":status.equals("Update")?"Update Supplier Details!":"Remove Supplier"),
-                "Your Supplier ID:"+(status.equals("Add")?SupplierModel.getSuppId():status.equals("Update")?idTxt.getText():idTxt.getText())+
+                "Your Supplier ID:"+(status.equals("Add")?supplierDAO.getSuppId():status.equals("Update")?idTxt.getText():idTxt.getText())+
                         "\nItem Type:"+ itemTypeTxt.getText()+"\nContract Start From:"+startDtPckr.getValue()+"\nContract Valid To:"+endDtPckr.getValue()+
                         "\n"+(status.equals("Add")?"Registered As Supplier Successfully!":status.equals("Update")?"Supplier Details Update Successfully":"Supplier Removed Successfully!"+"\n\nThank you!\n\nHotel Eden Garden,\nInamaluwa,\nSeegiriya"));
     }

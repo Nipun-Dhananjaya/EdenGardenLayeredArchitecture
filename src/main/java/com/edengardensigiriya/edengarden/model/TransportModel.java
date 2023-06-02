@@ -1,8 +1,6 @@
 package com.edengardensigiriya.edengarden.model;
 
 import com.edengardensigiriya.edengarden.db.DBConnection;
-import com.edengardensigiriya.edengarden.dto.Customer;
-import com.edengardensigiriya.edengarden.dto.RentalUpdate;
 import com.edengardensigiriya.edengarden.dto.Transport;
 import com.edengardensigiriya.edengarden.dto.TransportUpdate;
 import com.edengardensigiriya.edengarden.util.CrudUtil;

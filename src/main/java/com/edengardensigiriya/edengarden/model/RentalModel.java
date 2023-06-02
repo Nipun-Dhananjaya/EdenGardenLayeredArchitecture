@@ -168,7 +168,7 @@ public class RentalModel {
         if (vehi.next()){
             vehicle="Car";
         }else{
-            vehicle="Bicycle";
+            vehicle="BicycleDTO";
         }
         if (vehicle.equals("Car")){
             resultSet=CrudUtil.execute("SELECT rental.rental_id,rental.customer_id,customer.cust_name,car.car_type,car_rental.car_reg_num,rental.rental_takeover_date_time,rental.rented_duration,payment.paid_amount FROM rental INNER JOIN car_rental ON car_rental.rent_id=rental.rental_id INNER JOIN payment ON payment.pay_id=rental.payment_id INNER JOIN customer ON customer.cust_id=rental.customer_id INNER JOIN car ON car.car_reg_num=car_rental.car_reg_num WHERE rental.rental_id=?;",rentId);
@@ -211,7 +211,7 @@ public class RentalModel {
             boolean isAddedVehicle =false;
             boolean isAddedPayment = CrudUtil.execute("UPDATE payment SET status=? WHERE pay_id=?;", status,paymentId);
             boolean isAddedRental = CrudUtil.execute("UPDATE rental SET rent_status=? WHERE rental_id=?;", status, rentalId);
-            if (vehicleType.equals("Bicycle")) {
+            if (vehicleType.equals("BicycleDTO")) {
                 isAddedVehicle = CrudUtil.execute("UPDATE bicycle SET status=? WHERE bicycle_id=?;", "Available", vehicleId);
             }else{
                 isAddedVehicle = CrudUtil.execute("UPDATE car SET status=? WHERE car_reg_num=?;", "Available",vehicleId);

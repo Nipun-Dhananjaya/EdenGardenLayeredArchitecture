@@ -2,12 +2,9 @@ package com.edengardensigiriya.edengarden.controller;
 
 import com.edengardensigiriya.edengarden.db.DBConnection;
 import com.edengardensigiriya.edengarden.dto.*;
-import com.edengardensigiriya.edengarden.dto.tm.BookingTM;
 import com.edengardensigiriya.edengarden.dto.tm.RentalTM;
-import com.edengardensigiriya.edengarden.model.BookingModel;
 import com.edengardensigiriya.edengarden.model.PaymentModel;
 import com.edengardensigiriya.edengarden.model.RentalModel;
-import com.edengardensigiriya.edengarden.model.RoomModel;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -24,7 +21,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -71,7 +67,7 @@ public class RentalManageFormController {
     public TableColumn columnStatus1;
 
     public void initialize() throws SQLException {
-        vehicleType.add("Bicycle");
+        vehicleType.add("BicycleDTO");
         vehicleType.add("Car");
         ObservableList<String> Type = FXCollections.observableList(vehicleType);
         vehicleCmbBx.setItems(Type);

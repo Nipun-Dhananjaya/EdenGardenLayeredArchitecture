@@ -1,14 +1,13 @@
 package com.edengardensigiriya.edengarden.controller;
 
+import com.edengardensigiriya.edengarden.dao.DAOFactory;
+import com.edengardensigiriya.edengarden.dao.custom.BicycleDAO;
+import com.edengardensigiriya.edengarden.dao.custom.impl.BicycleDAOImpl;
 import com.edengardensigiriya.edengarden.db.DBConnection;
-import com.edengardensigiriya.edengarden.dto.Bicycle;
-import com.edengardensigiriya.edengarden.dto.Car;
+import com.edengardensigiriya.edengarden.dto.BicycleDTO;
 import com.edengardensigiriya.edengarden.dto.RegExPatterns;
 import com.edengardensigiriya.edengarden.dto.tm.BicycleTM;
-import com.edengardensigiriya.edengarden.dto.tm.CarTM;
-import com.edengardensigiriya.edengarden.model.BicycleModel;
-import com.edengardensigiriya.edengarden.model.CarModel;
-import com.edengardensigiriya.edengarden.util.CrudUtil;
+import com.edengardensigiriya.edengarden.entity.Bicycle;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -19,7 +18,6 @@ import javafx.scene.layout.AnchorPane;
 import lombok.SneakyThrows;
 
 import java.net.URL;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +40,7 @@ public class BicycleManageFormController implements Initializable {
     public TableColumn columnColor;
     public static ArrayList<String> bicycleTypes = new ArrayList<>();
     public TableColumn columnStatus;
+    BicycleDAO bicycleDAO= (BicycleDAO) DAOFactory.getDaoFactory().getDAO(DAOFactory.DAOTypes.BICYCLE);
 
     @SneakyThrows
     @Override
@@ -59,11 +58,21 @@ public class BicycleManageFormController implements Initializable {
         setCellValueFactory();
         getAllBicycles();
     }
-    private void getAllBicycles() throws SQLException {
+    private void getAllBicycles() throws SQLException, ClassNotFoundException {
         ObservableList<BicycleTM> obList = FXCollections.observableArrayList();
-        List<Bicycle> bicycleList = BicycleModel.getAll();
+        List<BicycleDTO> bicycleList = new ArrayList<>();
+        for (Bicycle bicycle:bicycleDAO.getAll()) {
+            bicycleList.add(new BicycleDTO(
+                    bicycle.getBicycleNo(),
+                    bicycle.getBrand(),
+                    bicycle.getBicycleType(),
+                    bicycle.getColour(),
+                    bicycle.getStatus()
 
-        for (Bicycle bicycle : bicycleList) {
+            ));
+        }
+
+        for (BicycleDTO bicycle : bicycleList) {
             obList.add(new BicycleTM(
                     bicycle.getBicycleNo(),
                     bicycle.getBrand(),
@@ -84,9 +93,19 @@ public class BicycleManageFormController implements Initializable {
     public void bicycleNoSearchOnAction(ActionEvent actionEvent) throws SQLException {
         try {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
-            List<Bicycle> bicycleList = BicycleModel.searchBicycle(bicycleNoTxt.getText());
+            List<BicycleDTO> bicycleList = new ArrayList<>();
+            for (Bicycle bicycle:bicycleDAO.search(bicycleNoTxt.getText())) {
+                bicycleList.add(new BicycleDTO(
+                        bicycle.getBicycleNo(),
+                        bicycle.getBrand(),
+                        bicycle.getBicycleType(),
+                        bicycle.getColour(),
+                        bicycle.getStatus()
+
+                ));
+            }
             if (!bicycleList.isEmpty()){
-                for (Bicycle bike : bicycleList) {
+                for (BicycleDTO bike : bicycleList) {
                     bicycleNoTxt.setText(bike.getBicycleNo());
                     bicycleTypeCmbBx.setValue(bike.getBicycleType());
                     colourTxt.setText(bike.getColour());
@@ -94,10 +113,10 @@ public class BicycleManageFormController implements Initializable {
                     bicycleNoTxt.setDisable(true);
                 }
             }else{
-                new Alert(Alert.AlertType.WARNING, "Bicycle Not Found!").showAndWait();
+                new Alert(Alert.AlertType.WARNING, "BicycleDTO Not Found!").showAndWait();
             }
             DBConnection.getInstance().getConnection().commit();
-        } catch (SQLException e) {
+        } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
             DBConnection.getInstance().getConnection().rollback();
         }finally{
@@ -110,19 +129,17 @@ public class BicycleManageFormController implements Initializable {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
             boolean isAffected=false;
             if (isCorrectPattern()){
-                System.out.println("First");
-                isAffected = BicycleModel.addBicycle(BicycleModel.generateID(),String.valueOf(bicycleTypeCmbBx.getSelectionModel().getSelectedItem()),
-                        colourTxt.getText(),brandTxt.getText());
-                System.out.println("Ran");
+                isAffected = bicycleDAO.save(new Bicycle(bicycleDAO.newIdGenerate(),String.valueOf(bicycleTypeCmbBx.getSelectionModel().getSelectedItem()),
+                        colourTxt.getText(),brandTxt.getText(),"Available"));
             }
             if (isAffected) {
-                new Alert(Alert.AlertType.INFORMATION, "Bicycle Added Successfully!").showAndWait();
+                new Alert(Alert.AlertType.INFORMATION, "BicycleDTO Added Successfully!").showAndWait();
                 resetPage();
             } else {
                 new Alert(Alert.AlertType.WARNING, "Re-Check Submitted Details!").showAndWait();
             }
             DBConnection.getInstance().getConnection().commit();
-        } catch (SQLException e) {
+        } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
             DBConnection.getInstance().getConnection().rollback();
         }finally{
@@ -135,8 +152,8 @@ public class BicycleManageFormController implements Initializable {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
             boolean isAffected=false;
             if (isCorrectPattern()){
-                isAffected = BicycleModel.updateBicycle(bicycleNoTxt.getText(),String.valueOf(bicycleTypeCmbBx.getSelectionModel().getSelectedItem()),
-                        colourTxt.getText(),brandTxt.getText());
+                isAffected = bicycleDAO.update(new Bicycle(bicycleNoTxt.getText(),String.valueOf(bicycleTypeCmbBx.getSelectionModel().getSelectedItem()),
+                        colourTxt.getText(),brandTxt.getText(),""));
             }
             if (isAffected) {
                 new Alert(Alert.AlertType.INFORMATION, "Bicycle Updated Successfully!").showAndWait();
@@ -146,7 +163,7 @@ public class BicycleManageFormController implements Initializable {
                 new Alert(Alert.AlertType.WARNING, "Re-Check Submitted Details!").showAndWait();
             }
             DBConnection.getInstance().getConnection().commit();
-        } catch (SQLException e) {
+        } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
             DBConnection.getInstance().getConnection().rollback();
         }finally{
@@ -161,7 +178,7 @@ public class BicycleManageFormController implements Initializable {
             if (comfirm.isPresent()){
                 boolean isAffected=false;
                 if (isCorrectPattern()){
-                    isAffected = BicycleModel.removeBicycle(bicycleNoTxt.getText());
+                    isAffected = bicycleDAO.delete(bicycleNoTxt.getText());
                 }
                 if (isAffected) {
                     new Alert(Alert.AlertType.INFORMATION, "Bicycle Removed Successfully!").showAndWait();
@@ -172,14 +189,14 @@ public class BicycleManageFormController implements Initializable {
                 }
             }
             DBConnection.getInstance().getConnection().commit();
-        } catch (SQLException e) {
+        } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
             DBConnection.getInstance().getConnection().rollback();
         }finally{
             DBConnection.getInstance().getConnection().setAutoCommit(true);
         }
     }
-    public void resetPage() throws SQLException {
+    public void resetPage() throws SQLException, ClassNotFoundException {
         bicycleNoTxt.setText("");
         brandTxt.setText("");
         colourTxt.setText("");

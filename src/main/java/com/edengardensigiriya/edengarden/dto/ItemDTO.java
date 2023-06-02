@@ -4,9 +4,10 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
-@Getter
 @Setter
+@Getter
 @AllArgsConstructor
-public class ItemDescrip {
+public class ItemDTO {
+    private String itemCode;
     private String itemDescription;
 }

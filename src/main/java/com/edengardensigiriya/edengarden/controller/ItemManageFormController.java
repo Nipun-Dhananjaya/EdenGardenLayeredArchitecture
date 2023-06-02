@@ -1,11 +1,11 @@
 package com.edengardensigiriya.edengarden.controller;
 
+import com.edengardensigiriya.edengarden.dao.DAOFactory;
+import com.edengardensigiriya.edengarden.dao.custom.ItemDAO;
 import com.edengardensigiriya.edengarden.db.DBConnection;
-import com.edengardensigiriya.edengarden.dto.Item;
-import com.edengardensigiriya.edengarden.dto.RegExPatterns;
-import com.edengardensigiriya.edengarden.dto.Supplier;
+import com.edengardensigiriya.edengarden.dto.ItemDTO;
 import com.edengardensigiriya.edengarden.dto.tm.ItemTM;
-import com.edengardensigiriya.edengarden.model.ItemModel;
+import com.edengardensigiriya.edengarden.entity.Item;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -14,7 +14,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.AnchorPane;
 
 import java.sql.SQLException;
-import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,16 +28,23 @@ public class ItemManageFormController {
     public Button updateBtn;
     public Button removeBtn;
     public TableView itmTbl;
+    ItemDAO itemDAO= (ItemDAO) DAOFactory.getDaoFactory().getDAO(DAOFactory.DAOTypes.ITEM);
 
-    public void initialize() throws SQLException {
+    public void initialize() throws SQLException, ClassNotFoundException {
         setCellValueFactory();
         getAllItems();
     }
-    private void getAllItems() throws SQLException {
+    private void getAllItems() throws SQLException, ClassNotFoundException {
         ObservableList<ItemTM> obList = FXCollections.observableArrayList();
-        List<Item> itmList = ItemModel.getAll();
+        List<ItemDTO> itmList = new ArrayList<>();
+        for (Item itm : itemDAO.getAll()) {
+            itmList.add(new ItemDTO(
+                    itm.getItemCode(),
+                    itm.getItemDescription()
+            ));
+        }
 
-        for (Item itm : itmList) {
+        for (ItemDTO itm : itmList) {
             obList.add(new ItemTM(
                     itm.getItemCode(),
                     itm.getItemDescription()
@@ -52,9 +59,15 @@ public class ItemManageFormController {
     public void idSearchOnAction(ActionEvent actionEvent) throws SQLException {
         try {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
-            List<Item> itemList = ItemModel.searchItem(idTxt.getText());
+            List<ItemDTO> itemList = new ArrayList<>();
+            for (Item itm : itemDAO.search(idTxt.getText())) {
+                itemList.add(new ItemDTO(
+                        itm.getItemCode(),
+                        itm.getItemDescription()
+                ));
+            }
             if (!itemList.isEmpty()){
-                for (Item item : itemList) {
+                for (ItemDTO item : itemList) {
                     idTxt.setText(item.getItemCode());
                     nameTxt.setText(item.getItemDescription());
                     idTxt.setDisable(true);
@@ -63,7 +76,7 @@ public class ItemManageFormController {
                 new Alert(Alert.AlertType.WARNING, "Item Not Found!").showAndWait();
             }
             DBConnection.getInstance().getConnection().commit();
-        } catch (SQLException e) {
+        } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
             DBConnection.getInstance().getConnection().rollback();
         }finally{
@@ -74,7 +87,7 @@ public class ItemManageFormController {
     public void addItemOnAction(ActionEvent actionEvent) throws SQLException {
         try {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
-            boolean isAdded = ItemModel.addItem(ItemModel.generateID(), nameTxt.getText());
+            boolean isAdded = itemDAO.save(new Item(itemDAO.newIdGenerate(), nameTxt.getText()));
             if (isAdded) {
                 new Alert(Alert.AlertType.INFORMATION, "Item Added Successfully!").showAndWait();
                 DBConnection.getInstance().getConnection().commit();
@@ -82,7 +95,7 @@ public class ItemManageFormController {
             } else {
                 new Alert(Alert.AlertType.WARNING, "Re-Check Submitted Details!").showAndWait();
             }
-        } catch (SQLException e) {
+        } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
             DBConnection.getInstance().getConnection().rollback();
         }finally{
@@ -93,7 +106,7 @@ public class ItemManageFormController {
     public void updateItemOnAction(ActionEvent actionEvent) throws SQLException {
         try {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
-            boolean isAdded = ItemModel.updateItem(idTxt.getText(), nameTxt.getText());
+            boolean isAdded = itemDAO.update(new Item(idTxt.getText(), nameTxt.getText()));
             if (isAdded) {
                 new Alert(Alert.AlertType.INFORMATION, "Item Updated Successfully!").showAndWait();
                 DBConnection.getInstance().getConnection().commit();
@@ -102,7 +115,7 @@ public class ItemManageFormController {
             } else {
                 new Alert(Alert.AlertType.WARNING, "Re-Check Submitted Details!").showAndWait();
             }
-        } catch (SQLException e) {
+        } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
             DBConnection.getInstance().getConnection().rollback();
         }finally{
@@ -115,7 +128,7 @@ public class ItemManageFormController {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
             Optional<ButtonType> comfirm=new Alert(Alert.AlertType.CONFIRMATION, "Do you want to remove the room?").showAndWait();
             if (comfirm.isPresent()){
-                boolean isAdded = ItemModel.removeItem(idTxt.getText());
+                boolean isAdded = itemDAO.delete(idTxt.getText());
                 if (isAdded) {
                     new Alert(Alert.AlertType.INFORMATION, "Item Removed Successfully!").showAndWait();
                     DBConnection.getInstance().getConnection().commit();
@@ -125,14 +138,14 @@ public class ItemManageFormController {
                     new Alert(Alert.AlertType.WARNING, "Re-Check Submitted Details!").showAndWait();
                 }
             }
-        } catch (SQLException e) {
+        } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
             DBConnection.getInstance().getConnection().rollback();
         }finally{
             DBConnection.getInstance().getConnection().setAutoCommit(true);
         }
     }
-    public void resetPage() throws SQLException {
+    public void resetPage() throws SQLException, ClassNotFoundException {
         idTxt.setText("");
         nameTxt.setText("");
         setCellValueFactory();

@@ -2,14 +2,11 @@ package com.edengardensigiriya.edengarden.model;
 
 import com.edengardensigiriya.edengarden.controller.ChangePacksFormController;
 import com.edengardensigiriya.edengarden.db.DBConnection;
-import com.edengardensigiriya.edengarden.dto.Customer;
 import com.edengardensigiriya.edengarden.util.CrudUtil;
-import javafx.scene.control.Alert;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.List;
 
 public class ChangePackModel {
     public static void setArrayList() throws SQLException {

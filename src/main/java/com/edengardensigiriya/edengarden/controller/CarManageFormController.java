@@ -1,17 +1,13 @@
 package com.edengardensigiriya.edengarden.controller;
 
+import com.edengardensigiriya.edengarden.dao.DAOFactory;
+import com.edengardensigiriya.edengarden.dao.custom.CarDAO;
+import com.edengardensigiriya.edengarden.dao.custom.impl.CarDAOImpl;
 import com.edengardensigiriya.edengarden.db.DBConnection;
-import com.edengardensigiriya.edengarden.dto.Car;
+import com.edengardensigiriya.edengarden.dto.CarDTO;
 import com.edengardensigiriya.edengarden.dto.RegExPatterns;
-import com.edengardensigiriya.edengarden.dto.Room;
-import com.edengardensigiriya.edengarden.dto.RoomUpdate;
 import com.edengardensigiriya.edengarden.dto.tm.CarTM;
-import com.edengardensigiriya.edengarden.dto.tm.RoomTM;
-import com.edengardensigiriya.edengarden.model.BookingModel;
-import com.edengardensigiriya.edengarden.model.CarModel;
-import com.edengardensigiriya.edengarden.model.CustomerModel;
-import com.edengardensigiriya.edengarden.model.RoomModel;
-import com.edengardensigiriya.edengarden.util.CrudUtil;
+import com.edengardensigiriya.edengarden.entity.Car;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -40,8 +36,9 @@ public class CarManageFormController {
     public TableColumn columnCarType;
     public TableColumn columnColor;
     public TableColumn columnStatus;
+    CarDAO carDAO= (CarDAO) DAOFactory.getDaoFactory().getDAO(DAOFactory.DAOTypes.CAR);
 
-    public void initialize() throws SQLException {
+    public void initialize() throws SQLException, ClassNotFoundException {
         carTypes.add("SUV");
         carTypes.add("Hatchback");
         carTypes.add("Crossover");
@@ -58,11 +55,20 @@ public class CarManageFormController {
         setCellValueFactory();
         getAllCars();
     }
-    private void getAllCars() throws SQLException {
+    private void getAllCars() throws SQLException, ClassNotFoundException {
         ObservableList<CarTM> obList = FXCollections.observableArrayList();
-        List<Car> carList = CarModel.getAll();
+        List<CarDTO> carList = new ArrayList<>();
+        for (Car car:carDAO.getAll()) {
+            carList.add(new CarDTO(
+                    car.getRegNo(),
+                    car.getBrand(),
+                    car.getCarType(),
+                    car.getColour(),
+                    car.getStatus()
+            ));
+        }
 
-        for (Car car : carList) {
+        for (CarDTO car : carList) {
             obList.add(new CarTM(
                     car.getRegNo(),
                     car.getBrand(),
@@ -83,9 +89,18 @@ public class CarManageFormController {
     public void regNoSearchOnAction(ActionEvent actionEvent) throws SQLException {
         try {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
-            List<Car> carList = CarModel.searchCar(regNoTxt.getText());
+            List<CarDTO> carList = new ArrayList<>();
+            for (Car car:carDAO.search(regNoTxt.getText())) {
+                carList.add(new CarDTO(
+                        car.getRegNo(),
+                        car.getBrand(),
+                        car.getCarType(),
+                        car.getColour(),
+                        car.getStatus()
+                ));
+            }
             if (!carList.isEmpty()){
-                for (Car car : carList) {
+                for (CarDTO car : carList) {
                     regNoTxt.setText(car.getRegNo());
                     carTypeCmbBx.setValue(car.getCarType());
                     colourTxt.setText(car.getColour());
@@ -96,7 +111,7 @@ public class CarManageFormController {
                 new Alert(Alert.AlertType.WARNING, "Car Not Found!").showAndWait();
             }
             DBConnection.getInstance().getConnection().commit();
-        } catch (SQLException e) {
+        } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
             DBConnection.getInstance().getConnection().rollback();
         }finally{
@@ -109,8 +124,8 @@ public class CarManageFormController {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
             boolean isAffected=false;
             if (isCorrectPattern()){
-                isAffected = CarModel.addCar(regNoTxt.getText(),String.valueOf(carTypeCmbBx.getSelectionModel().getSelectedItem()),
-                        colourTxt.getText(),brandTxt.getText());
+                isAffected = carDAO.save(new Car(regNoTxt.getText(), String.valueOf(carTypeCmbBx.getSelectionModel().getSelectedItem()),
+                        colourTxt.getText(), brandTxt.getText(),"Available"));
                 System.out.println("Ran");
             }
             if (isAffected) {
@@ -120,7 +135,7 @@ public class CarManageFormController {
             } else {
                 new Alert(Alert.AlertType.WARNING, "Re-Check Submitted Details!").showAndWait();
             }
-        } catch (SQLException e) {
+        } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
             DBConnection.getInstance().getConnection().rollback();
         }finally{
@@ -133,8 +148,8 @@ public class CarManageFormController {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
             boolean isAffected=false;
             if (isCorrectPattern()){
-                isAffected = CarModel.updateCar(regNoTxt.getText(),String.valueOf(carTypeCmbBx.getSelectionModel().getSelectedItem()),
-                        colourTxt.getText(),brandTxt.getText());
+                isAffected = carDAO.update(new Car(regNoTxt.getText(),String.valueOf(carTypeCmbBx.getSelectionModel().getSelectedItem()),
+                        colourTxt.getText(),brandTxt.getText(),""));
             }
             if (isAffected) {
                 new Alert(Alert.AlertType.INFORMATION, "Car Updated Successfully!").showAndWait();
@@ -144,7 +159,7 @@ public class CarManageFormController {
             } else {
                 new Alert(Alert.AlertType.WARNING, "Re-Check Submitted Details!").showAndWait();
             }
-        } catch (SQLException e) {
+        } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
             DBConnection.getInstance().getConnection().rollback();
         }finally{
@@ -159,7 +174,7 @@ public class CarManageFormController {
             if (comfirm.isPresent()){
                 boolean isAffected=false;
                 if (isCorrectPattern()){
-                    isAffected = CarModel.removeCar(regNoTxt.getText());
+                    isAffected = carDAO.delete(regNoTxt.getText());
                 }
                 if (isAffected) {
                     new Alert(Alert.AlertType.INFORMATION, "Car Removed Successfully!").showAndWait();
@@ -170,14 +185,14 @@ public class CarManageFormController {
                     new Alert(Alert.AlertType.WARNING, "Re-Check Submitted Details!").showAndWait();
                 }
             }
-        } catch (SQLException e) {
+        } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
             DBConnection.getInstance().getConnection().rollback();
         }finally{
             DBConnection.getInstance().getConnection().setAutoCommit(true);
         }
     }
-    public void resetPage() throws SQLException {
+    public void resetPage() throws SQLException, ClassNotFoundException {
         regNoTxt.setText("");
         brandTxt.setText("");
         colourTxt.setText("");

@@ -1,10 +1,12 @@
-package com.edengardensigiriya.edengarden.dto;
+package com.edengardensigiriya.edengarden.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @AllArgsConstructor
+@NoArgsConstructor
 @Setter
 @Getter
 public class Employer {

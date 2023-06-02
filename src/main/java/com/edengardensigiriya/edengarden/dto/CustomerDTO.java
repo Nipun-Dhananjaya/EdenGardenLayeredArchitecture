@@ -2,7 +2,7 @@ package com.edengardensigiriya.edengarden.dto;
 
 import javafx.scene.control.Button;
 
-public class Customer {
+public class CustomerDTO {
     private String custId;
     private String custName;
     private String custNic;
@@ -11,7 +11,7 @@ public class Customer {
     private String custContact;
     private String custGender;
 
-    public Customer(String custId, String custName, String custNic, String custEmail,String custAddress,String custContact,String custGender) {
+    public CustomerDTO(String custId, String custName, String custNic, String custEmail, String custAddress, String custContact, String custGender) {
         this.custId=custId;
         this.custName=custName;
         this.custNic=custNic;
