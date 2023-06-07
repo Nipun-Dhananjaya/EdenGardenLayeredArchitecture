@@ -1,11 +1,11 @@
 package com.edengardensigiriya.edengarden.controller;
 
+import com.edengardensigiriya.edengarden.dao.DAOFactory;
+import com.edengardensigiriya.edengarden.dao.custom.UserDAO;
 import com.edengardensigiriya.edengarden.db.DBConnection;
-import com.edengardensigiriya.edengarden.model.ChangeUserModel;
-import com.edengardensigiriya.edengarden.model.User;
+import com.edengardensigiriya.edengarden.entity.User;
 import javafx.event.ActionEvent;
 import javafx.scene.control.*;
-import javafx.stage.Stage;
 
 import java.sql.SQLException;
 
@@ -19,6 +19,7 @@ public class ChangeUserFormController{
     public TextField txtNewUserName;
     public RadioButton receptionistRdBtn;
     public RadioButton managerRdBtn;
+    UserDAO userDAO= (UserDAO) DAOFactory.getDaoFactory().getDAO(DAOFactory.DAOTypes.USER);
 
     public void escapeOldPwdOnAction(ActionEvent actionEvent) {
         txtOldPwd.requestFocus();
@@ -43,7 +44,7 @@ public class ChangeUserFormController{
     private void changeUser() throws SQLException {
         try{
             DBConnection.getInstance().getConnection().setAutoCommit(false);
-            if (ChangeUserModel.changeUser(txtOldUserName.getText(), txtOldPwd.getText(),txtNewUserEmpId.getText(),txtNewUserName.getText(),txtNewPwd.getText(),receptionistRdBtn.isSelected() ? "Receptionist":"Manager")) {
+            if (userDAO.changeUser(new User(txtOldUserName.getText(), txtOldPwd.getText(),txtNewUserEmpId.getText(),txtNewUserName.getText(),txtNewPwd.getText(),receptionistRdBtn.isSelected() ? "Receptionist":"Manager",0))) {
                 new Alert(Alert.AlertType.INFORMATION, "User Changed Successfully!").showAndWait();
                 DBConnection.getInstance().getConnection().commit();
                 resetPage();

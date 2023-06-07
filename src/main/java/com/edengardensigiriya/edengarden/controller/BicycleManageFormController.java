@@ -2,10 +2,9 @@ package com.edengardensigiriya.edengarden.controller;
 
 import com.edengardensigiriya.edengarden.dao.DAOFactory;
 import com.edengardensigiriya.edengarden.dao.custom.BicycleDAO;
-import com.edengardensigiriya.edengarden.dao.custom.impl.BicycleDAOImpl;
 import com.edengardensigiriya.edengarden.db.DBConnection;
 import com.edengardensigiriya.edengarden.dto.BicycleDTO;
-import com.edengardensigiriya.edengarden.dto.RegExPatterns;
+import com.edengardensigiriya.edengarden.util.RegExPatterns;
 import com.edengardensigiriya.edengarden.dto.tm.BicycleTM;
 import com.edengardensigiriya.edengarden.entity.Bicycle;
 import javafx.collections.FXCollections;

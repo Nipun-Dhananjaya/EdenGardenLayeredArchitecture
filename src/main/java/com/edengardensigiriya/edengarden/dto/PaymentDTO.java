@@ -4,14 +4,14 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
+@AllArgsConstructor
 @Setter
 @Getter
-@AllArgsConstructor
-public class TransportUpdate {
-    private String transId;
+public class PaymentDTO {
+    private String paymentId;
     private String custId;
-    private String custName;
-    private String bookFrom;
-    private String destination;
+    private String dateTime;
+    private String reason;
     private String cost;
+    private String status;
 }

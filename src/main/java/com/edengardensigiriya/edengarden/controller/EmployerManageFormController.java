@@ -2,11 +2,12 @@ package com.edengardensigiriya.edengarden.controller;
 
 import com.edengardensigiriya.edengarden.dao.DAOFactory;
 import com.edengardensigiriya.edengarden.dao.custom.EmployerDAO;
-import com.edengardensigiriya.edengarden.dao.custom.impl.EmployerDAOImpl;
 import com.edengardensigiriya.edengarden.db.DBConnection;
 import com.edengardensigiriya.edengarden.dto.*;
 import com.edengardensigiriya.edengarden.dto.tm.EmployerTM;
 import com.edengardensigiriya.edengarden.entity.Employer;
+import com.edengardensigiriya.edengarden.util.RegExPatterns;
+import com.edengardensigiriya.edengarden.util.SendEmail;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;

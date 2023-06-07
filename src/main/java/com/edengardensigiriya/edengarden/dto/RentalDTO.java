@@ -5,11 +5,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@NoArgsConstructor
 @AllArgsConstructor
 @Setter
 @Getter
-public class Rental {
+public class RentalDTO {
     private String rentId;
     private String custId;
     private String custName;
@@ -19,4 +18,8 @@ public class Rental {
     private String rentDuration;
     private String rentCost;
     private String rentStatus;
+
+    public RentalDTO(String vehicleId){
+        this.vehicleId=vehicleId;
+    }
 }

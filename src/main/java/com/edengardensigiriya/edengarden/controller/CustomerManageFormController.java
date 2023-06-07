@@ -2,11 +2,10 @@ package com.edengardensigiriya.edengarden.controller;
 
 import com.edengardensigiriya.edengarden.dao.DAOFactory;
 import com.edengardensigiriya.edengarden.dao.custom.CustomerDAO;
-import com.edengardensigiriya.edengarden.dao.custom.impl.CustomerDAOImpl;
 import com.edengardensigiriya.edengarden.db.DBConnection;
 import com.edengardensigiriya.edengarden.dto.CustomerDTO;
-import com.edengardensigiriya.edengarden.dto.RegExPatterns;
-import com.edengardensigiriya.edengarden.dto.SendEmail;
+import com.edengardensigiriya.edengarden.util.RegExPatterns;
+import com.edengardensigiriya.edengarden.util.SendEmail;
 import com.edengardensigiriya.edengarden.dto.tm.CustomerTM;
 import com.edengardensigiriya.edengarden.entity.Customer;
 import javafx.collections.FXCollections;

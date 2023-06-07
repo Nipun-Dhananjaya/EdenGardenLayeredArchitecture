@@ -1,4 +1,4 @@
-package com.edengardensigiriya.edengarden.dto;
+package com.edengardensigiriya.edengarden.util;
 
 import java.util.regex.Pattern;
 

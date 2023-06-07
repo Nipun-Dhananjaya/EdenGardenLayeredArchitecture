@@ -1,7 +1,8 @@
-package com.edengardensigiriya.edengarden.model;
+package com.edengardensigiriya.edengarden.dao.custom.impl;
 
-import com.edengardensigiriya.edengarden.dto.Booking;
-import com.edengardensigiriya.edengarden.dto.Payment;
+import com.edengardensigiriya.edengarden.dao.custom.PaymentDAO;
+import com.edengardensigiriya.edengarden.entity.Custom;
+import com.edengardensigiriya.edengarden.entity.Payment;
 import com.edengardensigiriya.edengarden.util.CrudUtil;
 
 import java.sql.ResultSet;
@@ -9,10 +10,34 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.edengardensigiriya.edengarden.model.CustomerModel.stringLength;
+public class PaymentDAOImpl implements PaymentDAO {
+    @Override
+    public List<Payment> getAll() throws SQLException, ClassNotFoundException {
+        return null;
+    }
 
-public class PaymentModel {
-    public static String generateID() {
+    @Override
+    public boolean save(Payment dto) throws SQLException, ClassNotFoundException {
+        return false;
+    }
+
+    @Override
+    public boolean update(Payment dto) throws SQLException, ClassNotFoundException {
+        return false;
+    }
+
+    @Override
+    public boolean delete(String s) throws SQLException, ClassNotFoundException {
+        return false;
+    }
+
+    @Override
+    public List<Payment> search(String s) throws SQLException, ClassNotFoundException {
+        return null;
+    }
+
+    @Override
+    public String newIdGenerate() throws SQLException, ClassNotFoundException {
         ResultSet result=null;
         String[] idParts;
         String id="P-00000";
@@ -31,7 +56,62 @@ public class PaymentModel {
         }
     }
 
-    private static String setNextIdValue(int number) {
+    @Override
+    public List<Custom> getAllRentalPay() throws SQLException {
+        ResultSet resultSet=CrudUtil.execute("SELECT payment.pay_id,rental.customer_id,payment.pay_made_date, payment.reason,payment.paid_amount,payment.status FROM payment INNER JOIN rental ON payment.pay_id=rental.payment_id ORDER BY payment.pay_id;");
+        List<Custom> data = new ArrayList<>();
+
+        while (resultSet.next()) {
+            data.add(new Custom(
+                    resultSet.getString(1),
+                    resultSet.getString(2),
+                    resultSet.getString(3),
+                    resultSet.getString(4),
+                    resultSet.getString(5),
+                    resultSet.getString(6)
+            ));
+        }
+        return data;
+    }
+
+    @Override
+    public List<Custom> getAllBookingPay() throws SQLException {
+        ResultSet resultSet=CrudUtil.execute("SELECT payment.pay_id,booking.customer_id,payment.pay_made_date, payment.reason,payment.paid_amount,payment.status FROM payment INNER JOIN booking ON payment.pay_id=booking.payment_id ORDER BY payment.pay_id;");
+        List<Custom> data = new ArrayList<>();
+
+        while (resultSet.next()) {
+            data.add(new Custom(
+                    resultSet.getString(1),
+                    resultSet.getString(2),
+                    resultSet.getString(3),
+                    resultSet.getString(4),
+                    resultSet.getString(5),
+                    resultSet.getString(6)
+            ));
+        }
+        return data;
+    }
+
+    @Override
+    public List<Custom> getAllTransportPay() throws SQLException {
+        ResultSet resultSet=CrudUtil.execute("SELECT payment.pay_id,transport.customer_id,payment.pay_made_date, payment.reason,payment.paid_amount,payment.status FROM payment INNER JOIN transport ON payment.pay_id=transport.payment_id ORDER BY payment.pay_id;");
+        List<Custom> data = new ArrayList<>();
+
+        while (resultSet.next()) {
+            data.add(new Custom(
+                    resultSet.getString(1),
+                    resultSet.getString(2),
+                    resultSet.getString(3),
+                    resultSet.getString(4),
+                    resultSet.getString(5),
+                    resultSet.getString(6)
+            ));
+        }
+        return data;
+    }
+
+    @Override
+    public String setNextIdValue(int number) throws SQLException {
         String returnVal="";
         int length=String.valueOf(number).length();
         if(length<stringLength){
@@ -43,55 +123,5 @@ public class PaymentModel {
             return returnVal;
         }
         return String.valueOf(number);
-    }
-
-    public static List<Payment> getAllRentalPay() throws SQLException {
-        ResultSet resultSet=CrudUtil.execute("SELECT payment.pay_id,rental.customer_id,payment.pay_made_date, payment.reason,payment.paid_amount,payment.status FROM payment INNER JOIN rental ON payment.pay_id=rental.payment_id ORDER BY payment.pay_id;");
-        List<Payment> data = new ArrayList<>();
-
-        while (resultSet.next()) {
-            data.add(new Payment(
-                    resultSet.getString(1),
-                    resultSet.getString(2),
-                    resultSet.getString(3),
-                    resultSet.getString(4),
-                    resultSet.getString(5),
-                    resultSet.getString(6)
-            ));
-        }
-        return data;
-    }
-    public static List<Payment> getAllBookingPay() throws SQLException {
-        ResultSet resultSet=CrudUtil.execute("SELECT payment.pay_id,booking.customer_id,payment.pay_made_date, payment.reason,payment.paid_amount,payment.status FROM payment INNER JOIN booking ON payment.pay_id=booking.payment_id ORDER BY payment.pay_id;");
-        List<Payment> data = new ArrayList<>();
-
-        while (resultSet.next()) {
-            data.add(new Payment(
-                    resultSet.getString(1),
-                    resultSet.getString(2),
-                    resultSet.getString(3),
-                    resultSet.getString(4),
-                    resultSet.getString(5),
-                    resultSet.getString(6)
-            ));
-        }
-        return data;
-    }
-
-    public static List<Payment> getAllTransportPay() throws SQLException {
-        ResultSet resultSet=CrudUtil.execute("SELECT payment.pay_id,transport.customer_id,payment.pay_made_date, payment.reason,payment.paid_amount,payment.status FROM payment INNER JOIN transport ON payment.pay_id=transport.payment_id ORDER BY payment.pay_id;");
-        List<Payment> data = new ArrayList<>();
-
-        while (resultSet.next()) {
-            data.add(new Payment(
-                    resultSet.getString(1),
-                    resultSet.getString(2),
-                    resultSet.getString(3),
-                    resultSet.getString(4),
-                    resultSet.getString(5),
-                    resultSet.getString(6)
-            ));
-        }
-        return data;
     }
 }

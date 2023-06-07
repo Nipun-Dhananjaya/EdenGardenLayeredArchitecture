@@ -7,7 +7,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @Getter
 @Setter
-public class Booking {
+public class BookingDTO {
     String bookingId;
     String custId;
     String custName;

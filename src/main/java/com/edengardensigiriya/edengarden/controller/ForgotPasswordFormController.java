@@ -1,6 +1,8 @@
 package com.edengardensigiriya.edengarden.controller;
 
-import com.edengardensigiriya.edengarden.model.User;
+import com.edengardensigiriya.edengarden.dao.DAOFactory;
+import com.edengardensigiriya.edengarden.dao.custom.UserDAO;
+import com.edengardensigiriya.edengarden.entity.User;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -26,6 +28,7 @@ public class ForgotPasswordFormController {
     public Button backBtn;
     public TextField txtOldUserName;
     public TextField txtNewUserName;
+    UserDAO userDAO= (UserDAO) DAOFactory.getDaoFactory().getDAO(DAOFactory.DAOTypes.USER);
 
     public void loadBrowserOnAction(ActionEvent actionEvent) {
         try {
@@ -46,9 +49,9 @@ public class ForgotPasswordFormController {
         Stage stage = (Stage) root.getScene().getWindow();
         boolean isDone;
         if (stage.getTitle().equals("Change Receptionist Password")){
-            isDone=User.changePwd(txtOldUserName.getText(),txtOldPwd.getText(),txtNewUserName.getText(),txtNewPwd.getText(),txtReEnterPwd.getText(),"Receptionist");
+            isDone=userDAO.changePwd(new User(txtOldUserName.getText(),txtOldPwd.getText(),txtNewUserName.getText(),txtNewPwd.getText(),txtReEnterPwd.getText(),"Receptionist"));
         }else{
-            isDone=User.changePwd(txtOldUserName.getText(),txtOldPwd.getText(),txtNewUserName.getText(),txtNewPwd.getText(),txtReEnterPwd.getText(),"Manager");
+            isDone=userDAO.changePwd(new User(txtOldUserName.getText(),txtOldPwd.getText(),txtNewUserName.getText(),txtNewPwd.getText(),txtReEnterPwd.getText(),"Manager"));
         }
         if (isDone){
             new Alert(Alert.AlertType.INFORMATION, "Username and Password Changed!").showAndWait();

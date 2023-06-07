@@ -1,8 +1,10 @@
 package com.edengardensigiriya.edengarden.controller;
 
-import com.edengardensigiriya.edengarden.dto.Payment;
+import com.edengardensigiriya.edengarden.dao.DAOFactory;
+import com.edengardensigiriya.edengarden.dao.custom.PaymentDAO;
+import com.edengardensigiriya.edengarden.dto.PaymentDTO;
 import com.edengardensigiriya.edengarden.dto.tm.PaymentTM;
-import com.edengardensigiriya.edengarden.model.PaymentModel;
+import com.edengardensigiriya.edengarden.entity.Custom;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -13,6 +15,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.AnchorPane;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class PaymentManageFormController {
@@ -39,6 +42,7 @@ public class PaymentManageFormController {
     public TableColumn columnTransReason;
     public TableColumn columnTransCost;
     public TableColumn columnTransStatus;
+    PaymentDAO paymentDAO= (PaymentDAO) DAOFactory.getDaoFactory().getDAO(DAOFactory.DAOTypes.PAYMENT);
 
     public void initialize() throws SQLException {
         setBookingCellValueFactory();
@@ -51,9 +55,19 @@ public class PaymentManageFormController {
 
     private void getAllTransportPayments() throws SQLException {
         ObservableList<PaymentTM> obList = FXCollections.observableArrayList();
-        List<Payment> paymentList = PaymentModel.getAllTransportPay();
+        List<PaymentDTO> paymentList =new ArrayList<>();// paymentDAO.getAllTransportPay();
+        for (Custom payment : paymentDAO.getAllTransportPay()) {
+            paymentList.add(new PaymentDTO(
+                    payment.getPaymentId(),
+                    payment.getCustId(),
+                    payment.getPaidDateTime(),
+                    payment.getPaidReason(),
+                    payment.getPayment(),
+                    payment.getPaymentStatus()
+            ));
+        }
 
-        for (Payment payment : paymentList) {
+        for (PaymentDTO payment : paymentList) {
             obList.add(new PaymentTM(
                     payment.getPaymentId(),
                     payment.getCustId(),
@@ -68,9 +82,19 @@ public class PaymentManageFormController {
 
     private void getAllBookingPayments() throws SQLException {
         ObservableList<PaymentTM> obList = FXCollections.observableArrayList();
-        List<Payment> paymentList = PaymentModel.getAllBookingPay();
+        List<PaymentDTO> paymentList = new ArrayList<>();
 
-        for (Payment payment : paymentList) {
+        for (Custom payment : paymentDAO.getAllBookingPay()) {
+            paymentList.add(new PaymentDTO(
+                    payment.getPaymentId(),
+                    payment.getCustId(),
+                    payment.getPaidDateTime(),
+                    payment.getPaidReason(),
+                    payment.getPayment(),
+                    payment.getPaymentStatus()
+            ));
+        }
+        for (PaymentDTO payment : paymentList) {
             obList.add(new PaymentTM(
                     payment.getPaymentId(),
                     payment.getCustId(),
@@ -85,9 +109,19 @@ public class PaymentManageFormController {
 
     private void getAllRentalPayments() throws SQLException {
         ObservableList<PaymentTM> obList = FXCollections.observableArrayList();
-        List<Payment> paymentList = PaymentModel.getAllRentalPay();
+        List<PaymentDTO> paymentList = new ArrayList<>();
 
-        for (Payment payment : paymentList) {
+        for (Custom payment : paymentDAO.getAllRentalPay()) {
+            paymentList.add(new PaymentDTO(
+                    payment.getPaymentId(),
+                    payment.getCustId(),
+                    payment.getPaidDateTime(),
+                    payment.getPaidReason(),
+                    payment.getPayment(),
+                    payment.getPaymentStatus()
+            ));
+        }
+        for (PaymentDTO payment : paymentList) {
             obList.add(new PaymentTM(
                     payment.getPaymentId(),
                     payment.getCustId(),

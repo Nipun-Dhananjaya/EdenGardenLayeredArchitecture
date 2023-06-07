@@ -7,13 +7,13 @@ import lombok.Setter;
 @Setter
 @Getter
 @AllArgsConstructor
-public class RentalUpdate {
+public class BookingUIDTO {
     private String bookingId;
     private String custId;
     private String custName;
-    private String vehicle;
-    private String vehicleType;
-    private String vehicleId;
+    private String roomType;
+    private String roomNo;
+    private String sleepCount;
     private String bookFrom;
     private String duration;
     private String cost;

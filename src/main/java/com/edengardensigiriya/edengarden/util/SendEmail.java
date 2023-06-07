@@ -1,4 +1,4 @@
-package com.edengardensigiriya.edengarden.dto;
+package com.edengardensigiriya.edengarden.util;
 
 
 import com.google.api.client.auth.oauth2.Credential;

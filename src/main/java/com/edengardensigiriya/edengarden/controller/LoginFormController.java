@@ -1,6 +1,8 @@
 package com.edengardensigiriya.edengarden.controller;
 
-import com.edengardensigiriya.edengarden.model.User;
+import com.edengardensigiriya.edengarden.dao.DAOFactory;
+import com.edengardensigiriya.edengarden.dao.custom.UserDAO;
+import com.edengardensigiriya.edengarden.entity.User;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -24,6 +26,7 @@ public class LoginFormController {
     public AnchorPane root;
     public Rectangle rectangle;
     public Hyperlink hprLnkChngePwd;
+    UserDAO userDAO= (UserDAO) DAOFactory.getDaoFactory().getDAO(DAOFactory.DAOTypes.USER);
 
     public void loadBrowserOnAction(ActionEvent actionEvent) {
         try {
@@ -51,13 +54,13 @@ public class LoginFormController {
     private void login() throws IOException, SQLException {
         Stage stage = (Stage) root.getScene().getWindow();
         if (stage.getTitle().equals("Receptionist Login Form")) {
-            if (User.IsCorrect(txtUserName.getText(), txtPwd.getText(),"Receptionist")) {
+            if (userDAO.IsCorrect(new User(txtUserName.getText(), txtPwd.getText(),"Receptionist"))) {
                 setUI("Receptionist Dashboard", "/view/receptionistDashboardForm.fxml");
             }else{
                 new Alert(Alert.AlertType.WARNING, "Username or password is incorrect!").show();
             }
         } else {
-            if (User.IsCorrect(txtUserName.getText(), txtPwd.getText(),"Manager")) {
+            if (userDAO.IsCorrect(new User(txtUserName.getText(), txtPwd.getText(),"Manager"))) {
                 setUI("Manager Dashboard", "/view/managerDashboardForm.fxml");
             }else{
                 new Alert(Alert.AlertType.WARNING, "Username or password is incorrect!").show();

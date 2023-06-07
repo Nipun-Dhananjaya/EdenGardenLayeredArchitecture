@@ -7,7 +7,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @Setter
 @Getter
-public class OrderUpdate {
+public class OrderUIDTO {
     private String ordId;
     private String suppId;
     private String deleverDateTime;

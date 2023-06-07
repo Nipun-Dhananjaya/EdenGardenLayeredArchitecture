@@ -7,12 +7,13 @@ import lombok.Setter;
 @Getter
 @Setter
 @AllArgsConstructor
-public class Transport {
-    private String transId;
-    private String custId;
-    private String custName;
-    private String dateTime;
-    private String destination;
+public class OrderDTO {
+    private String ordId;
+    private String suppId;
+    private String items;
+    private String qty;
+    private String orderedDateTime;
+    private String deliverDateTime;
     private String cost;
     private String status;
 }

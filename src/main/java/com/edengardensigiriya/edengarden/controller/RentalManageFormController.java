@@ -1,10 +1,14 @@
 package com.edengardensigiriya.edengarden.controller;
 
+import com.edengardensigiriya.edengarden.dao.DAOFactory;
+import com.edengardensigiriya.edengarden.dao.custom.PaymentDAO;
+import com.edengardensigiriya.edengarden.dao.custom.RentalDAO;
 import com.edengardensigiriya.edengarden.db.DBConnection;
 import com.edengardensigiriya.edengarden.dto.*;
 import com.edengardensigiriya.edengarden.dto.tm.RentalTM;
-import com.edengardensigiriya.edengarden.model.PaymentModel;
-import com.edengardensigiriya.edengarden.model.RentalModel;
+import com.edengardensigiriya.edengarden.entity.Custom;
+import com.edengardensigiriya.edengarden.util.RegExPatterns;
+import com.edengardensigiriya.edengarden.util.SendEmail;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -15,7 +19,6 @@ import javafx.scene.layout.AnchorPane;
 import javax.mail.MessagingException;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -65,13 +68,15 @@ public class RentalManageFormController {
     public TableView carRentalTbl;
     public TableColumn columnStatus;
     public TableColumn columnStatus1;
+    RentalDAO rentalDAO= (RentalDAO) DAOFactory.getDaoFactory().getDAO(DAOFactory.DAOTypes.RENTAL);
+    PaymentDAO paymentDAO= (PaymentDAO) DAOFactory.getDaoFactory().getDAO(DAOFactory.DAOTypes.PAYMENT);
 
     public void initialize() throws SQLException {
         vehicleType.add("BicycleDTO");
         vehicleType.add("Car");
         ObservableList<String> Type = FXCollections.observableList(vehicleType);
         vehicleCmbBx.setItems(Type);
-        RentalModel.updateStatus();
+        rentalDAO.updateStatus();
         setCarCellValueFactory();
         getAllCarRentals();
         setBicycleCellValueFactory();
@@ -104,9 +109,22 @@ public class RentalManageFormController {
 
     private void getAllCarRentals() throws SQLException {
         ObservableList<RentalTM> obList = FXCollections.observableArrayList();
-        List<Rental> rentalList = RentalModel.getAllCars();
+        List<RentalDTO> rentalList = new ArrayList<>();
 
-        for (Rental rental : rentalList) {
+        for (Custom rental : rentalDAO.getAllCars()) {
+            rentalList.add(new RentalDTO(
+                    rental.getRentId(),
+                    rental.getCustId(),
+                    rental.getCustName(),
+                    rental.getVehicleType(),
+                    rental.getVehicleId(),
+                    rental.getRentFrom(),
+                    rental.getRentDuration(),
+                    rental.getRentCost(),
+                    rental.getRentStatus()
+            ));
+        }
+        for (RentalDTO rental : rentalList) {
             obList.add(new RentalTM(
                     rental.getRentId(),
                     rental.getCustId(),
@@ -124,9 +142,22 @@ public class RentalManageFormController {
 
     private void getAllBicycleRentals() throws SQLException {
         ObservableList<RentalTM> obList = FXCollections.observableArrayList();
-        List<Rental> rentalList = RentalModel.getAllBicycles();
+        List<RentalDTO> rentalList = new ArrayList<>();
 
-        for (Rental rental : rentalList) {
+        for (Custom rental : rentalDAO.getAllBicycles()) {
+            rentalList.add(new RentalDTO(
+                    rental.getRentId(),
+                    rental.getCustId(),
+                    rental.getCustName(),
+                    rental.getVehicleType(),
+                    rental.getVehicleId(),
+                    rental.getRentFrom(),
+                    rental.getRentDuration(),
+                    rental.getRentCost(),
+                    rental.getRentStatus()
+            ));
+        }
+        for (RentalDTO rental : rentalList) {
             obList.add(new RentalTM(
                     rental.getRentId(),
                     rental.getCustId(),
@@ -146,9 +177,23 @@ public class RentalManageFormController {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         try {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
-            List<RentalUpdate> rentList = RentalModel.searchRental(bookingIdTxt.getText());
+            List<RentalUIDTO> rentList = new ArrayList<>();
+
+            for (Custom rental : rentalDAO.search(bookingIdTxt.getText())) {
+                rentList.add(new RentalUIDTO(
+                        rental.getRentId(),
+                        rental.getCustId(),
+                        rental.getCustName(),
+                        rental.getVehicle(),
+                        rental.getVehicleType(),
+                        rental.getVehicleId(),
+                        rental.getRentFrom(),
+                        rental.getRentDuration(),
+                        rental.getRentCost()
+                ));
+            }
             if (!rentList.isEmpty()){
-                for (RentalUpdate rental : rentList) {
+                for (RentalUIDTO rental : rentList) {
                     bookingIdTxt.setText(rental.getBookingId());
                     custIdTxt.setText(rental.getCustId());
                     nameTxt.setText(rental.getCustName());
@@ -168,7 +213,7 @@ public class RentalManageFormController {
                 new Alert(Alert.AlertType.WARNING, "Rental Not Found!").showAndWait();
             }
             DBConnection.getInstance().getConnection().commit();
-        } catch (SQLException e) {
+        } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
             DBConnection.getInstance().getConnection().rollback();
         }finally{
@@ -179,7 +224,7 @@ public class RentalManageFormController {
     public void searchCustomerOnAction(ActionEvent actionEvent) throws SQLException {
         try {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
-            String name= RentalModel.searchCustomer(custIdTxt.getText());
+            String name= rentalDAO.searchCustomer(custIdTxt.getText());
             if (name!=null){
                 nameTxt.setText(name);
             }
@@ -201,11 +246,11 @@ public class RentalManageFormController {
             Optional<ButtonType> comfirm=new Alert(Alert.AlertType.CONFIRMATION, "Do you want to cancel the booking?").showAndWait();
             if (comfirm.isPresent()){
                 String bookingId = bookingIdTxt.getText();
-                String paymentId = RentalModel.getPaymentId(bookingId);
+                String paymentId = rentalDAO.getPaymentId(bookingId);
                 boolean isAffected=false;
                 if (isCorrectPattern()){
-                    isAffected=RentalModel.cancelRental(bookingId, custIdTxt.getText(),String.valueOf(vehicleTypeCmbBx.getSelectionModel().getSelectedItem()),
-                            String.valueOf(vehicleIdCmbBx.getSelectionModel().getSelectedItem()), paymentId,"Cancelled");
+                    isAffected=rentalDAO.cancelRental(new Custom(bookingId, custIdTxt.getText(),String.valueOf(vehicleCmbBx.getSelectionModel().getSelectedItem()),
+                            String.valueOf(vehicleIdCmbBx.getSelectionModel().getSelectedItem()), paymentId,"Cancelled",(float) 10.5));
                 }
                 if (isAffected) {
                     new Alert(Alert.AlertType.INFORMATION, "Rental Cancelled!").showAndWait();
@@ -234,12 +279,12 @@ public class RentalManageFormController {
             LocalDateTime startDate = LocalDateTime.of(startDateDtPckr.getValue(), LocalTime.parse(startTimeTxt.getText()));
             long duration = Long.parseLong(durationTxt.getText());
             String bookingId = bookingIdTxt.getText();
-            String paymentId = RentalModel.getPaymentId(bookingId);
+            String paymentId = rentalDAO.getPaymentId(bookingId);
             boolean isAffected=false;
             if (isCorrectPattern()){
-                isAffected=RentalModel.updateRental(bookingId, custIdTxt.getText(), startDate, duration, paymentId,
+                isAffected=rentalDAO.update(new Custom(bookingId, custIdTxt.getText(), String.valueOf(startDate), String.valueOf(duration), paymentId,
                         String.valueOf(vehicleCmbBx.getValue()),String.valueOf(vehicleTypeCmbBx.getValue()),
-                        String.valueOf(vehicleIdCmbBx.getValue()), costTxt.getText());
+                        String.valueOf(vehicleIdCmbBx.getValue()), String.valueOf(costTxt.getText()),true));
             }
             if (isAffected) {
                 new Alert(Alert.AlertType.INFORMATION, "Rental Updated!").showAndWait();
@@ -252,7 +297,7 @@ public class RentalManageFormController {
                 new Alert(Alert.AlertType.WARNING, "Re-Check Submitted Details!").showAndWait();
             }
             DBConnection.getInstance().getConnection().commit();
-        } catch (SQLException e) {
+        } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
             DBConnection.getInstance().getConnection().rollback();
         }finally{
@@ -267,13 +312,13 @@ public class RentalManageFormController {
             LocalDateTime now = LocalDateTime.now();
             LocalDateTime startDate = LocalDateTime.of(startDateDtPckr.getValue(), LocalTime.parse(startTimeTxt.getText()));
             long duration = Long.valueOf(durationTxt.getText());
-            String paymentId = PaymentModel.generateID();
-            String rentalId = RentalModel.generateID();
+            String paymentId = paymentDAO.newIdGenerate();
+            String rentalId = rentalDAO.newIdGenerate();
             boolean isAffected=false;
             if (isCorrectPattern()){
-                isAffected=RentalModel.isAdded(rentalId, custIdTxt.getText(), startDate, duration, paymentId, costTxt.getText(), now,
+                isAffected=rentalDAO.save(new Custom(rentalId, custIdTxt.getText(), String.valueOf(startDate), String.valueOf(duration), paymentId, costTxt.getText(),
                         String.valueOf(vehicleCmbBx.getSelectionModel().getSelectedItem()),String.valueOf(vehicleTypeCmbBx.getSelectionModel().getSelectedItem()),
-                        String.valueOf(vehicleIdCmbBx.getSelectionModel().getSelectedItem()));
+                        String.valueOf(vehicleIdCmbBx.getSelectionModel().getSelectedItem()),0,true));
             }
             if (isAffected) {
                 new Alert(Alert.AlertType.INFORMATION, "Rental Made Successfully!").showAndWait();
@@ -283,7 +328,7 @@ public class RentalManageFormController {
                 new Alert(Alert.AlertType.WARNING, "Re-Check Submitted Details!").showAndWait();
             }
             DBConnection.getInstance().getConnection().commit();
-        } catch (SQLException e) {
+        } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
             DBConnection.getInstance().getConnection().rollback();
         }finally{
@@ -293,10 +338,15 @@ public class RentalManageFormController {
 
     public void loadAvailableVehiclesOnAction(ActionEvent actionEvent) throws SQLException {
         vehicleId.clear();
-        ResultSet resultSet=RentalModel.getVehicleId(String.valueOf(vehicleCmbBx.getSelectionModel().getSelectedItem()),
-                String.valueOf(vehicleTypeCmbBx.getSelectionModel().getSelectedItem()));
-        while (resultSet.next()){
-            vehicleId.add(resultSet.getString(1));
+        List<RentalDTO> resultSet=new ArrayList<>();
+        for (Custom custom:rentalDAO.getVehicleId(String.valueOf(vehicleCmbBx.getSelectionModel().getSelectedItem()),
+                String.valueOf(vehicleTypeCmbBx.getSelectionModel().getSelectedItem()))) {
+            resultSet.add(new RentalDTO(
+                    custom.getVehicleId()
+            ));
+        }
+        for (int i = 0; i < resultSet.size(); i++) {
+            vehicleId.add(resultSet.get(i).getVehicleId());
         }
         ObservableList<String> vehicleIdObLst = FXCollections.observableList(vehicleId);
         vehicleIdCmbBx.setItems(vehicleIdObLst);
@@ -358,9 +408,9 @@ public class RentalManageFormController {
         return false;
     }
     public void sendMail(String status) throws MessagingException, GeneralSecurityException, IOException, SQLException {
-        SendEmail.sendMail(RentalModel.getEmail(custIdTxt.getText()),
+        SendEmail.sendMail(rentalDAO.getEmail(custIdTxt.getText()),
                 (status.equals("Booking")?"Rent A Vehicle":status.equals("Update")?"Rental Update":"Rental Cancellation"),
-                "Dear Customer,\nYour Rental ID:"+(status.equals("Booking")?RentalModel.getBookingId():status.equals("Update")?bookingIdTxt.getText():bookingIdTxt.getText())+"\nYour Customer ID:"+custIdTxt.getText()+"\nName:"+nameTxt.getText()+
+                "Dear Customer,\nYour Rental ID:"+(status.equals("Booking")?rentalDAO.getBookingId():status.equals("Update")?bookingIdTxt.getText():bookingIdTxt.getText())+"\nYour Customer ID:"+custIdTxt.getText()+"\nName:"+nameTxt.getText()+
                         "\nVehicle Type:"+ vehicleCmbBx.getSelectionModel().getSelectedItem()+"\nVehicle Model:"+ vehicleTypeCmbBx.getSelectionModel().getSelectedItem()+"\nVehicle ID:"+ vehicleIdCmbBx.getSelectionModel().getSelectedItem()+"\nFrom:"+startDateDtPckr.getValue()+"  "+startTimeTxt.getText()+"\nDuration: "+durationTxt.getText()+"\nTotal Cost:"+ costTxt.getText()+
                         "\n"+(status.equals("Booking")?"Rent Successful!":status.equals("Update")?"Rental Update Successfully":"Vehicle Rental Cancelled!"+"\n\nThank you for using our service!\n\nHotel Eden Garden,\nInamaluwa,\nSeegiriya"));
     }

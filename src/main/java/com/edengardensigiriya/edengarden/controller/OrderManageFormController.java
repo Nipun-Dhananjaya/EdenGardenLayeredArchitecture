@@ -2,12 +2,15 @@ package com.edengardensigiriya.edengarden.controller;
 
 import com.edengardensigiriya.edengarden.dao.DAOFactory;
 import com.edengardensigiriya.edengarden.dao.custom.ItemDAO;
+import com.edengardensigiriya.edengarden.dao.custom.OrderDAO;
 import com.edengardensigiriya.edengarden.db.DBConnection;
 import com.edengardensigiriya.edengarden.dto.*;
 import com.edengardensigiriya.edengarden.dto.tm.OrderItemTM;
 import com.edengardensigiriya.edengarden.dto.tm.OrderTM;
+import com.edengardensigiriya.edengarden.entity.Custom;
 import com.edengardensigiriya.edengarden.entity.Item;
-import com.edengardensigiriya.edengarden.model.*;
+import com.edengardensigiriya.edengarden.util.RegExPatterns;
+import com.edengardensigiriya.edengarden.util.SendEmail;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -55,21 +58,34 @@ public class OrderManageFormController {
     public TableColumn columnOrdTblOrdStatus;
     public TextField costTxt;
     ObservableList<OrderItemTM> obList = FXCollections.observableArrayList();
-    List<OrderItem> data = new ArrayList<>();
+    List<OrderItemDTO> data = new ArrayList<>();
     ItemDAO itemDAO= (ItemDAO) DAOFactory.getDaoFactory().getDAO(DAOFactory.DAOTypes.ITEM);
+    OrderDAO orderDAO= (OrderDAO) DAOFactory.getDaoFactory().getDAO(DAOFactory.DAOTypes.ORDER);
 
-    public void initialize() throws SQLException {
+    public void initialize() throws SQLException, ClassNotFoundException {
         costTxt.setText("0.00");
         setOrderCellValueFactory();
         getAllOrders();
         getAllItems();
     }
 
-    private void getAllOrders() throws SQLException {
+    private void getAllOrders() throws SQLException, ClassNotFoundException {
         ObservableList<OrderTM> obList = FXCollections.observableArrayList();
-        List<Order> ordList = OrderModel.getAll();
+        List<OrderDTO> ordList = new ArrayList<>();//orderDAO.getAll();
 
-        for (Order order : ordList) {
+        for (Custom order : orderDAO.getAll()) {
+            ordList.add(new OrderDTO(
+                    order.getOrdId(),
+                    order.getSuppId(),
+                    order.getItemDescription(),
+                    order.getQty(),
+                    order.getOrderedDateTime(),
+                    order.getDeliverDateTime(),
+                    order.getOrdCost(),
+                    order.getOrdStatus()
+            ));
+        }
+        for (OrderDTO order : ordList) {
             obList.add(new OrderTM(
                     order.getOrdId(),
                     order.getSuppId(),
@@ -97,12 +113,27 @@ public class OrderManageFormController {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         try {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
-            List<OrderUpdate> ordList = OrderModel.searchOrderTxt(bookingIdTxt.getText());
-            data=OrderModel.getAllItemsOfOrder(bookingIdTxt.getText());
+            List<OrderUIDTO> ordList = new ArrayList<>();
+            List<Custom> customs = orderDAO.search(bookingIdTxt.getText());
+
+            for (Custom custom:customs) {
+                ordList.add(new OrderUIDTO(
+                        custom.getOrdId(),
+                        custom.getSuppId(),
+                        custom.getDeliverDateTime(),
+                        custom.getOrdCost()
+                ));
+            }
+            for (Custom custom:orderDAO.getAllItemsOfOrder(bookingIdTxt.getText())) {
+                data.add(new OrderItemDTO(
+                        custom.getItemDescription(),
+                        custom.getQty()
+                ));
+            }
             setItemsCellValueFactory();
             getUpdateOrderItems();
             if (!ordList.isEmpty()){
-                for (OrderUpdate ord : ordList) {
+                for (OrderUIDTO ord : ordList) {
                     bookingIdTxt.setText(ord.getOrdId());
                     suppIdTxt.setText(ord.getSuppId());
                     deliverDateDtPckr.setValue(LocalDate.parse(ord.getDeleverDateTime(),formatter));
@@ -117,7 +148,7 @@ public class OrderManageFormController {
                 new Alert(Alert.AlertType.WARNING, "Order Not Found!").showAndWait();
             }
             DBConnection.getInstance().getConnection().commit();
-        } catch (SQLException e) {
+        } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
             DBConnection.getInstance().getConnection().rollback();
         }finally{
@@ -126,9 +157,15 @@ public class OrderManageFormController {
     }
 
     private void getUpdateOrderItems() throws SQLException {
-        List<OrderItem> ordItmList = OrderModel.getAllItemsOfOrder(bookingIdTxt.getText());
+        List<OrderItemDTO> ordItmList = new ArrayList<>();//orderDAO.getAllItemsOfOrder(bookingIdTxt.getText());
 
-        for (OrderItem orderItm : ordItmList) {
+        for (Custom custom:orderDAO.getAllItemsOfOrder(bookingIdTxt.getText())) {
+            ordItmList.add(new OrderItemDTO(
+                    custom.getItemDescription(),
+                    custom.getQty()
+            ));
+        }
+        for (OrderItemDTO orderItm : ordItmList) {
             obList.add(new OrderItemTM(
                     orderItm.getItem(),
                     orderItm.getQty()
@@ -145,8 +182,14 @@ public class OrderManageFormController {
             LocalDateTime deliverDate = LocalDateTime.of(deliverDateDtPckr.getValue(), LocalTime.parse(deliverTimeTxt.getText()));
             boolean isAffected=false;
             if (isCorrectPattern()){
-                System.out.println("ran");
-                isAffected = OrderModel.setOrder(OrderModel.generateID(),suppIdTxt.getText(),data,now,deliverDate,costTxt.getText());
+                List<Custom> items=new ArrayList<>();
+                for (OrderItemDTO orderItem:data) {
+                    items.add(new Custom(
+                            orderItem.getItem(),
+                            orderItem.getQty()
+                    ));
+                }
+                isAffected = orderDAO.save(new Custom(orderDAO.newIdGenerate(),suppIdTxt.getText(),items,String.valueOf(deliverDate),costTxt.getText()));
             }
             if (isAffected) {
                 new Alert(Alert.AlertType.INFORMATION, "Order Placed!").showAndWait();
@@ -156,7 +199,7 @@ public class OrderManageFormController {
             } else {
                 new Alert(Alert.AlertType.WARNING, "Re-Check Submitted Details!").showAndWait();
             }
-        } catch (SQLException e) {
+        } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
             DBConnection.getInstance().getConnection().rollback();
         }finally{
@@ -164,7 +207,7 @@ public class OrderManageFormController {
         }
     }
 
-    private void resetPage() throws SQLException {
+    private void resetPage() throws SQLException, ClassNotFoundException {
         bookingIdTxt.setText("");
         suppIdTxt.setText("");
         deliverTimeTxt.setText("");
@@ -186,7 +229,7 @@ public class OrderManageFormController {
             if (comfirm.isPresent()){
                 boolean isAffected=false;
                 if (isCorrectPattern()){
-                    isAffected = OrderModel.cancelOrder(bookingIdTxt.getText());
+                    isAffected = orderDAO.cancelOrder(bookingIdTxt.getText());
                 }
                 if (isAffected) {
                     new Alert(Alert.AlertType.INFORMATION, "Order Cancelled!").showAndWait();
@@ -199,7 +242,7 @@ public class OrderManageFormController {
                     new Alert(Alert.AlertType.WARNING, "Re-Check Submitted Details!").showAndWait();
                 }
             }
-        } catch (SQLException e) {
+        } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
             DBConnection.getInstance().getConnection().rollback();
         }finally{
@@ -215,7 +258,14 @@ public class OrderManageFormController {
             LocalDateTime deliverDate = LocalDateTime.of(deliverDateDtPckr.getValue(), LocalTime.parse(deliverTimeTxt.getText()));
             boolean isAffected=false;
             if (isCorrectPattern()){
-                isAffected = OrderModel.updateOrder(bookingIdTxt.getText(),suppIdTxt.getText(),data,now,deliverDate,costTxt.getText());
+                List<Custom> items=new ArrayList<>();
+                for (OrderItemDTO orderItem:data) {
+                    items.add(new Custom(
+                            orderItem.getItem(),
+                            orderItem.getQty()
+                    ));
+                }
+                isAffected = orderDAO.update(new Custom(bookingIdTxt.getText(),suppIdTxt.getText(),items,String.valueOf(deliverDate),costTxt.getText()));
             }
             if (isAffected) {
                 new Alert(Alert.AlertType.INFORMATION, "Order Updated!").showAndWait();
@@ -227,7 +277,7 @@ public class OrderManageFormController {
             } else {
                 new Alert(Alert.AlertType.WARNING, "Re-Check Submitted Details!").showAndWait();
             }
-        } catch (SQLException e) {
+        } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
             DBConnection.getInstance().getConnection().rollback();
         }finally{
@@ -236,8 +286,8 @@ public class OrderManageFormController {
     }
 
     public void addItemToTblOnAction(ActionEvent actionEvent) {
-        if (RegExPatterns.getDoublePattern().matcher(qtyTxt.getText()).matches()) {//|| !qtyTxt.getText().equals("0")||!qtyTxt.getText().equals("0.0")||!qtyTxt.getText().equals("0.00")|| qtyTxt.getText()!=null
-            data.add(new OrderItem(String.valueOf(itemCmbBx.getSelectionModel().getSelectedItem()), qtyTxt.getText()));
+        if (RegExPatterns.getDoublePattern().matcher(qtyTxt.getText()).matches()) {
+            data.add(new OrderItemDTO(String.valueOf(itemCmbBx.getSelectionModel().getSelectedItem()), qtyTxt.getText()));
             setItemsCellValueFactory();
             getOrderItems();
             itemCmbBx.setValue("Item");
@@ -250,9 +300,9 @@ public class OrderManageFormController {
 
     private void getOrderItems() {
         ObservableList<OrderItemTM> obList = FXCollections.observableArrayList();
-        List<OrderItem> ordItmList = data;
+        List<OrderItemDTO> ordItmList = data;
 
-        for (OrderItem orderItm : ordItmList) {
+        for (OrderItemDTO orderItm : ordItmList) {
             obList.add(new OrderItemTM(
                     orderItm.getItem(),
                     orderItm.getQty()
@@ -296,14 +346,22 @@ public class OrderManageFormController {
         return false;
     }
     public void sendMail(String status) throws MessagingException, GeneralSecurityException, IOException, SQLException {
-        SendEmail.sendMail(OrderModel.getEmail(suppIdTxt.getText()),(status.equals("Order")?"Hotel Eden Garden Order":status.equals("Update")?"Hotel Eden Garden Order Update":"Hotel Eden Garden Order Cancellation"),
-                "Your Order ID:"+(status.equals("Order")?OrderModel.getBookingId():status.equals("Update")?bookingIdTxt.getText():bookingIdTxt.getText())+"\nOrder List:\n"+setItemList()+"\n\nOrder Placed time: "+ LocalDateTime.now()+"\nOrder Deliver Date: "+deliverDateDtPckr.getValue()+"  "+deliverTimeTxt.getText()+"\n"+(status.equals("Order")?"Order Placed!":status.equals("Update")?"Order Updated!":"Order Cancelled!"+"\n\nThank you!\n\nHotel Eden Garden,\nInamaluwa,\nSeegiriya"));
+        SendEmail.sendMail(orderDAO.getEmail(suppIdTxt.getText()),(status.equals("Order")?"Hotel Eden Garden Order":status.equals("Update")?"Hotel Eden Garden Order Update":"Hotel Eden Garden Order Cancellation"),
+                "Your Order ID:"+(status.equals("Order")?orderDAO.getOrderId():status.equals("Update")?bookingIdTxt.getText():bookingIdTxt.getText())+"\nOrder List:\n"+setItemList()+"\n\nOrder Placed time: "+ LocalDateTime.now()+"\nOrder Deliver Date: "+deliverDateDtPckr.getValue()+"  "+deliverTimeTxt.getText()+"\n"+(status.equals("Order")?"Order Placed!":status.equals("Update")?"Order Updated!":"Order Cancelled!"+"\n\nThank you!\n\nHotel Eden Garden,\nInamaluwa,\nSeegiriya"));
     }
 
     private String setItemList() throws SQLException {
-        List<OrderItem> ordItmList = OrderModel.getAllItemsOfOrder(bookingIdTxt.getText());
+        //List<OrderItem> ordItmList = orderDAO.getAllItemsOfOrder(bookingIdTxt.getText());
+        List<OrderItemDTO> ordItmList = new ArrayList<>();
+
+        for (Custom custom:orderDAO.getAllItemsOfOrder(bookingIdTxt.getText())) {
+            ordItmList.add(new OrderItemDTO(
+                    custom.getItemDescription(),
+                    custom.getQty()
+            ));
+        }
         String list="Item                                   Quantity";
-        for (OrderItem orderItm : ordItmList) {
+        for (OrderItemDTO orderItm : ordItmList) {
             list+="\n"+orderItm.getItem()+"         "+orderItm.getQty();
         }
         return list;

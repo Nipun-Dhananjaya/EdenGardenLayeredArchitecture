@@ -2,10 +2,9 @@ package com.edengardensigiriya.edengarden.controller;
 
 import com.edengardensigiriya.edengarden.dao.DAOFactory;
 import com.edengardensigiriya.edengarden.dao.custom.CarDAO;
-import com.edengardensigiriya.edengarden.dao.custom.impl.CarDAOImpl;
 import com.edengardensigiriya.edengarden.db.DBConnection;
 import com.edengardensigiriya.edengarden.dto.CarDTO;
-import com.edengardensigiriya.edengarden.dto.RegExPatterns;
+import com.edengardensigiriya.edengarden.util.RegExPatterns;
 import com.edengardensigiriya.edengarden.dto.tm.CarTM;
 import com.edengardensigiriya.edengarden.entity.Car;
 import javafx.collections.FXCollections;
