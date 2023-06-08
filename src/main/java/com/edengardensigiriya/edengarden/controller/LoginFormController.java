@@ -1,7 +1,11 @@
 package com.edengardensigiriya.edengarden.controller;
 
+import com.edengardensigiriya.edengarden.bo.BOFactory;
+import com.edengardensigiriya.edengarden.bo.custom.ChangeUserBO;
+import com.edengardensigiriya.edengarden.bo.custom.LoginBO;
 import com.edengardensigiriya.edengarden.dao.DAOFactory;
 import com.edengardensigiriya.edengarden.dao.custom.UserDAO;
+import com.edengardensigiriya.edengarden.dto.UserDTO;
 import com.edengardensigiriya.edengarden.entity.User;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXMLLoader;
@@ -26,7 +30,7 @@ public class LoginFormController {
     public AnchorPane root;
     public Rectangle rectangle;
     public Hyperlink hprLnkChngePwd;
-    UserDAO userDAO= (UserDAO) DAOFactory.getDaoFactory().getDAO(DAOFactory.DAOTypes.USER);
+    LoginBO loginBO= (LoginBO) BOFactory.getBoFactory().getBO(BOFactory.BOTypes.LOGIN);
 
     public void loadBrowserOnAction(ActionEvent actionEvent) {
         try {
@@ -54,13 +58,13 @@ public class LoginFormController {
     private void login() throws IOException, SQLException {
         Stage stage = (Stage) root.getScene().getWindow();
         if (stage.getTitle().equals("Receptionist Login Form")) {
-            if (userDAO.IsCorrect(new User(txtUserName.getText(), txtPwd.getText(),"Receptionist"))) {
+            if (loginBO.isCorrect(new UserDTO(txtUserName.getText(), txtPwd.getText(),"Receptionist"))) {
                 setUI("Receptionist Dashboard", "/view/receptionistDashboardForm.fxml");
             }else{
                 new Alert(Alert.AlertType.WARNING, "Username or password is incorrect!").show();
             }
         } else {
-            if (userDAO.IsCorrect(new User(txtUserName.getText(), txtPwd.getText(),"Manager"))) {
+            if (loginBO.isCorrect(new UserDTO(txtUserName.getText(), txtPwd.getText(),"Manager"))) {
                 setUI("Manager Dashboard", "/view/managerDashboardForm.fxml");
             }else{
                 new Alert(Alert.AlertType.WARNING, "Username or password is incorrect!").show();

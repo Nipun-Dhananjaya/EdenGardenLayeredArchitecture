@@ -1,5 +1,7 @@
 package com.edengardensigiriya.edengarden.controller;
 
+import com.edengardensigiriya.edengarden.bo.BOFactory;
+import com.edengardensigiriya.edengarden.bo.custom.RoomBO;
 import com.edengardensigiriya.edengarden.dao.DAOFactory;
 import com.edengardensigiriya.edengarden.dao.custom.RoomDAO;
 import com.edengardensigiriya.edengarden.db.DBConnection;
@@ -36,7 +38,7 @@ public class RoomManageFormController {
     public TableColumn columnRoomType;
     public static ArrayList<String> roomTypes = new ArrayList<>();
     public static ArrayList<Integer> sleepCount = new ArrayList<>();
-    RoomDAO roomDAO= (RoomDAO) DAOFactory.getDaoFactory().getDAO(DAOFactory.DAOTypes.ROOM);
+    RoomBO roomBO= (RoomBO) BOFactory.getBoFactory().getBO(BOFactory.BOTypes.ROOM);
 
 
     public void initialize() throws SQLException, ClassNotFoundException {
@@ -56,17 +58,7 @@ public class RoomManageFormController {
 
     private void getAllRooms() throws SQLException, ClassNotFoundException {
         ObservableList<RoomTM> obList = FXCollections.observableArrayList();
-        List<RoomDTO> roomList = new ArrayList<>();
-        for (Room room : roomDAO.getAll()) {
-            roomList.add(new RoomDTO(
-                    room.getRoomNo(),
-                    room.getRoomType(),
-                    room.getSleepCount(),
-                    room.getCostPerDay(),
-                    room.getAvailability()
-            ));
-        }
-
+        List<RoomDTO> roomList = roomBO.getAllRooms();
         for (RoomDTO room : roomList) {
             obList.add(new RoomTM(
                     room.getRoomNo(),
@@ -90,17 +82,10 @@ public class RoomManageFormController {
     public void roomNoSearchOnAction(ActionEvent actionEvent) throws SQLException {
         try {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
-            List<Room> roomList = new ArrayList<>();
-            for (Room room : roomDAO.search(roomNoTxt.getText())) {
-                roomList.add(new Room(
-                        room.getRoomNo(),
-                        room.getRoomType(),
-                        room.getSleepCount(),
-                        room.getCostPerDay()
-                ));
-            }
+            List<RoomDTO> roomList = roomBO.searchRooms(roomNoTxt.getText());
+
             if (!roomList.isEmpty()){
-                for (Room room : roomList) {
+                for (RoomDTO room : roomList) {
                     roomNoTxt.setText(room.getRoomNo());
                     roomTypeCmbBx.setValue(room.getRoomType());
                     sleepsCountCmbBx.setValue(room.getSleepCount());
@@ -127,7 +112,7 @@ public class RoomManageFormController {
             double costPerDay = Double.parseDouble(costTxt.getText());
             boolean isAffected=false;
             if (isCorrectPattern()){
-                isAffected = roomDAO.update(new Room(roomNoTxt.getText(), roomType, String.valueOf(sleepCount), String.valueOf(costPerDay)));
+                isAffected = roomBO.updateRooms(new RoomDTO(roomNoTxt.getText(), roomType, String.valueOf(sleepCount), String.valueOf(costPerDay)));
             }
             if (isAffected) {
                 new Alert(Alert.AlertType.INFORMATION, "Room Updated Successfully!").showAndWait();
@@ -152,7 +137,7 @@ public class RoomManageFormController {
             if (comfirm.isPresent()){
                 boolean isAffected=false;
                 if (isCorrectPattern()){
-                    isAffected = roomDAO.delete(roomNoTxt.getText());
+                    isAffected = roomBO.removeRooms(roomNoTxt.getText());
                 }
                 if (isAffected) {
                     new Alert(Alert.AlertType.INFORMATION, "Room Removed Successfully!").showAndWait();
@@ -179,7 +164,7 @@ public class RoomManageFormController {
             double costPerDay = Double.parseDouble(costTxt.getText());
             boolean isAffected=false;
             if (isCorrectPattern()){
-                isAffected = roomDAO.save(new Room(roomDAO.newIdGenerate(), roomType, String.valueOf(sleepCount), String.valueOf(costPerDay)));
+                isAffected = roomBO.saveRooms(new RoomDTO(roomBO.newIdGenerate(), roomType, String.valueOf(sleepCount), String.valueOf(costPerDay)));
             }
             if (isAffected) {
                 new Alert(Alert.AlertType.INFORMATION, "Room Added Successfully!").showAndWait();

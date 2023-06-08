@@ -1,5 +1,7 @@
 package com.edengardensigiriya.edengarden.controller;
 
+import com.edengardensigiriya.edengarden.bo.BOFactory;
+import com.edengardensigiriya.edengarden.bo.custom.EmployerBO;
 import com.edengardensigiriya.edengarden.dao.DAOFactory;
 import com.edengardensigiriya.edengarden.dao.custom.EmployerDAO;
 import com.edengardensigiriya.edengarden.db.DBConnection;
@@ -59,7 +61,7 @@ public class EmployerManageFormController {
     public Button addContactBtn1;
     public ComboBox contactCmbBx;
     static String con;
-    EmployerDAO employerDAO= (EmployerDAO) DAOFactory.getDaoFactory().getDAO(DAOFactory.DAOTypes.EMPLOYER);
+    EmployerBO employerBO= (EmployerBO) BOFactory.getBoFactory().getBO(BOFactory.BOTypes.EMPLOYER);
 
     public void initialize() throws SQLException, ClassNotFoundException {
         setCellValueFactory();
@@ -68,24 +70,8 @@ public class EmployerManageFormController {
 
     private void getAllEmployers() throws SQLException, ClassNotFoundException {
         ObservableList<EmployerTM> obList = FXCollections.observableArrayList();
-        List<EmployerDTO> empList = new ArrayList<>();//employerDAO.getAll();
+        List<EmployerDTO> empList = employerBO.getAllEmployers();
 
-        for (Employer employer : employerDAO.getAll()) {
-            empList.add(new EmployerDTO(
-                    employer.getEmpId(),
-                    employer.getEmpName(),
-                    employer.getNic(),
-                    employer.getAddress(),
-                    employer.getEmail(),
-                    employer.getContact(),
-                    employer.getDob(),
-                    employer.getGender(),
-                    employer.getJobRole(),
-                    employer.getMonthlySalary(),
-                    employer.getEnteredDate(),
-                    employer.getResignedDate()
-            ));
-        }
         for (EmployerDTO employer : empList) {
             obList.add(new EmployerTM(
                     employer.getEmpId(),
@@ -121,24 +107,8 @@ public class EmployerManageFormController {
     public void idSearchOnAction(ActionEvent actionEvent) throws SQLException {
         try {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
-            employerDAO.contact.clear();
-            List<EmployerDTO> empList = new ArrayList<>();
-            for (Employer employer : employerDAO.search(idTxt.getText())) {
-                empList.add(new EmployerDTO(
-                        employer.getEmpId(),
-                        employer.getEmpName(),
-                        employer.getNic(),
-                        employer.getAddress(),
-                        employer.getEmail(),
-                        employer.getContact(),
-                        employer.getDob(),
-                        employer.getGender(),
-                        employer.getJobRole(),
-                        employer.getMonthlySalary(),
-                        employer.getEnteredDate(),
-                        employer.getResignedDate()
-                ));
-            }
+            EmployerDAO.contact.clear();
+            List<EmployerDTO> empList = employerBO.searchEmployers(idTxt.getText());
             if (!empList.isEmpty()){
                 for (EmployerDTO employer : empList) {
                     nameTxt.setText(employer.getEmpName());
@@ -178,8 +148,8 @@ public class EmployerManageFormController {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
             boolean isAffected=false;
             if (isCorrectPattern()){
-                isAffected= employerDAO.save(new Employer(employerDAO.newIdGenerate(), nameTxt.getText(), nicTxt.getText(),
-                        addressTxt.getText(), emailTxt.getText(), String.join(" , ", employerDAO.contact),String.valueOf(dobDtPck.getValue()),
+                isAffected= employerBO.saveEmployer(new EmployerDTO(employerBO.newIdGenerate(), nameTxt.getText(), nicTxt.getText(),
+                        addressTxt.getText(), emailTxt.getText(), String.join(" , ", EmployerDAO.contact),String.valueOf(dobDtPck.getValue()),
                         maleRdBtn.isSelected() ? "MALE" : "FEMALE", jobRolTxt.getText(),empSalary.getText(),String.valueOf(strtDtDtPck.getValue()),String.valueOf(endDtPkr.getValue())));
             }
             if (isAffected) {
@@ -203,8 +173,8 @@ public class EmployerManageFormController {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
             boolean isAffected=false;
             if (isCorrectPattern()){
-                isAffected= employerDAO.update(new Employer(idTxt.getText(), nameTxt.getText(), nicTxt.getText(),
-                        addressTxt.getText(), emailTxt.getText(), String.join(" , ", employerDAO.contact),String.valueOf(dobDtPck.getValue()),
+                isAffected= employerBO.updateEmployer(new EmployerDTO(idTxt.getText(), nameTxt.getText(), nicTxt.getText(),
+                        addressTxt.getText(), emailTxt.getText(), String.join(" , ", EmployerDAO.contact),String.valueOf(dobDtPck.getValue()),
                         maleRdBtn.isSelected() ? "MALE" : "FEMALE", jobRolTxt.getText(),empSalary.getText(),String.valueOf(strtDtDtPck.getValue()),String.valueOf(endDtPkr.getValue())));
             }
             if (isAffected) {
@@ -233,7 +203,7 @@ public class EmployerManageFormController {
         emailTxt.setText("");
         jobRolTxt.setText("");
         empSalary.setText("");
-        employerDAO.contact.clear();
+        EmployerDAO.contact.clear();
         setCellValueFactory();
         getAllEmployers();
     }
@@ -244,7 +214,7 @@ public class EmployerManageFormController {
         ObservableList<String> cont = FXCollections.observableList(conList);
         int length=contacts.length;
         while (length>0){
-            employerDAO.contact.add(contacts[length-1]);
+            EmployerDAO.contact.add(contacts[length-1]);
             length-=1;
         }
         return cont;
@@ -253,15 +223,15 @@ public class EmployerManageFormController {
     public void addContactOnAction(ActionEvent actionEvent) {
         System.out.println(con);
         if (contactCmbBx.getItems().contains(con)) {
-            employerDAO.contact.remove(con);
+            EmployerDAO.contact.remove(con);
         }
         //System.out.println("con:   "/*+contactTxt.getText()*/);
         if (RegExPatterns.getMobilePattern().matcher(contactTxt.getText()).matches()){
-            boolean isAlreadyHas = employerDAO.addContact(contactTxt.getText());
+            boolean isAlreadyHas = employerBO.addContact(contactTxt.getText());
             if (!isAlreadyHas) {
                 new Alert(Alert.AlertType.WARNING, "Contact Already Added!").showAndWait();
             } else {
-                ObservableList<String> cont = FXCollections.observableList(employerDAO.contact);
+                ObservableList<String> cont = FXCollections.observableList(EmployerDAO.contact);
                 contactCmbBx.setItems(cont);
                 contactCmbBx.setValue("Contact List");
                 contactTxt.setText("");
@@ -286,7 +256,7 @@ public class EmployerManageFormController {
     public void sendMail(String status) throws MessagingException, GeneralSecurityException, IOException, SQLException {
         SendEmail.sendMail(emailTxt.getText(),
                 (status.equals("Add")?"Register As Employer!":"Update Employer Details!"),
-                "Your Employer ID:"+(status.equals("Add")? employerDAO.getEmpId():idTxt.getText())+"\nName:"+nameTxt.getText()+
+                "Your Employer ID:"+(status.equals("Add")? employerBO.getEmpId():idTxt.getText())+"\nName:"+nameTxt.getText()+
                         "\nNIC: "+ nicTxt.getText()+"\nJob Role: "+ jobRolTxt.getText()+"\nService Start From:"+strtDtDtPck.getValue()+"\nService End:"+endDtPkr.getValue()+
                         "\n"+(status.equals("Add")?"Registered As Supplier Successfully!":"Employer Details Update Successfully"+"\n\nThank you!\n\nHotel Eden Garden,\nInamaluwa,\nSeegiriya"));
     }

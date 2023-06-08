@@ -1,5 +1,7 @@
 package com.edengardensigiriya.edengarden.controller;
 
+import com.edengardensigiriya.edengarden.bo.BOFactory;
+import com.edengardensigiriya.edengarden.bo.custom.TransportBO;
 import com.edengardensigiriya.edengarden.dao.DAOFactory;
 import com.edengardensigiriya.edengarden.dao.custom.PaymentDAO;
 import com.edengardensigiriya.edengarden.dao.custom.TransportDAO;
@@ -49,11 +51,10 @@ public class TransportManageFormController {
     public TableColumn columnCost;
     public TableColumn columnStatus;
 
-    TransportDAO transportDAO = (TransportDAO) DAOFactory.getDaoFactory().getDAO(DAOFactory.DAOTypes.TRANSPORT);
-    PaymentDAO paymentDAO= (PaymentDAO) DAOFactory.getDaoFactory().getDAO(DAOFactory.DAOTypes.PAYMENT);
+    TransportBO transportBO = (TransportBO) BOFactory.getBoFactory().getBO(BOFactory.BOTypes.TRANSPORT);
 
     public void initialize() throws SQLException, ClassNotFoundException {
-        transportDAO.updateStatus();
+        transportBO.updateStatus();
         setCellValueFactory();
         getAllTransports();
         costTxt.setText("0.00");
@@ -61,19 +62,7 @@ public class TransportManageFormController {
 
     private void getAllTransports() throws SQLException, ClassNotFoundException {
         ObservableList<TransportTM> obList = FXCollections.observableArrayList();
-        List<TransportDTO> transportList = new ArrayList<>();
-
-        for (Custom transport : transportDAO.getAll()) {
-            transportList.add(new TransportDTO(
-                    transport.getTransId(),
-                    transport.getCustId(),
-                    transport.getCustName(),
-                    transport.getTransDateTime(),
-                    transport.getDestination(),
-                    transport.getTransCost(),
-                    transport.getTransStatus()
-            ));
-        }
+        List<TransportDTO> transportList = transportBO.getAllTransports();
         for (TransportDTO transport : transportList) {
             obList.add(new TransportTM(
                     transport.getTransId(),
@@ -102,17 +91,7 @@ public class TransportManageFormController {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         try {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
-            List<TransportUIDTO> transportList = new ArrayList<>();
-            for (Custom transport : transportDAO.search(transportIdTxt.getText())) {
-                transportList.add(new TransportUIDTO(
-                        transport.getTransId(),
-                        transport.getCustId(),
-                        transport.getCustName(),
-                        transport.getTransDateTime(),
-                        transport.getDestination(),
-                        transport.getTransCost()
-                ));
-            }
+            List<TransportUIDTO> transportList = transportBO.searchTransports(transportIdTxt.getText());
             if (!transportList.isEmpty()) {
                 for (TransportUIDTO transportUpdate : transportList) {
                     transportIdTxt.setText(transportUpdate.getTransId());
@@ -146,7 +125,7 @@ public class TransportManageFormController {
         DBConnection.getInstance().getConnection().setAutoCommit(true);
         try {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
-            String name = transportDAO.searchCustomer(custIdTxt.getText());
+            String name = transportBO.searchCustomer(custIdTxt.getText());
             if (name != null) {
                 nameTxt.setText(name);
             } else {
@@ -166,11 +145,11 @@ public class TransportManageFormController {
             DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
             LocalDateTime now = LocalDateTime.now();
             LocalDateTime startDateTime = LocalDateTime.of(DateTimeDtPckr.getValue(), LocalTime.parse(startTimeTxt.getText()));
-            String paymentId = paymentDAO.newIdGenerate();
-            String transportId = transportDAO.newIdGenerate();
+            String paymentId = transportBO.newPayIdGenerate();
+            String transportId = transportBO.newTransIdGenerate();
             boolean isAffected = false;
             if (isCorrectPattern()) {
-                isAffected = transportDAO.save(new Custom(transportId, custIdTxt.getText(), String.valueOf(startDateTime), destinationTxt.getText(),
+                isAffected = transportBO.saveTransports(new TransportDTO(transportId, custIdTxt.getText(), String.valueOf(startDateTime), destinationTxt.getText(),
                         paymentId, costTxt.getText(),true));
             }
             if (isAffected) {
@@ -195,10 +174,10 @@ public class TransportManageFormController {
             Optional<ButtonType> comfirm = new Alert(Alert.AlertType.CONFIRMATION, "Do you want to cancel the booking?").showAndWait();
             if (comfirm.isPresent()) {
                 String transId = transportIdTxt.getText();
-                String paymentId = transportDAO.getPaymentId(transId);
+                String paymentId = transportBO.getPaymentId(transId);
                 boolean isAffected = false;
                 if (isCorrectPattern()) {
-                    isAffected = transportDAO.cancelTransport(new Custom(transId, paymentId, "Cancelled"));
+                    isAffected = transportBO.cancelTransports(new TransportDTO(transId, paymentId, "Cancelled"));
                 }
                 if (isAffected) {
                     new Alert(Alert.AlertType.INFORMATION, "Transport Cancelled!").showAndWait();
@@ -226,10 +205,10 @@ public class TransportManageFormController {
             DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
             LocalDateTime startDate = LocalDateTime.of(DateTimeDtPckr.getValue(), LocalTime.parse(startTimeTxt.getText()));
             String transId = transportIdTxt.getText();
-            String paymentId = transportDAO.getPaymentId(transId);
+            String paymentId = transportBO.getPaymentId(transId);
             boolean isAffected = false;
             if (isCorrectPattern()) {
-                isAffected = transportDAO.update(new Custom(transId, custIdTxt.getText(), String.valueOf(startDate), paymentId,
+                isAffected = transportBO.updateTransports(new TransportDTO(transId, custIdTxt.getText(), String.valueOf(startDate), paymentId,
                         destinationTxt.getText(), costTxt.getText(),0));
             }
             if (isAffected) {
@@ -269,9 +248,9 @@ public class TransportManageFormController {
     }
 
     public void sendMail(String status) throws MessagingException, GeneralSecurityException, IOException, SQLException {
-        SendEmail.sendMail(transportDAO.getEmail(custIdTxt.getText()),
+        SendEmail.sendMail(transportBO.getEmail(custIdTxt.getText()),
                 (status.equals("Booking") ? "Transport Booking" : status.equals("Update") ? "Transport Booking Update" : "Transport Booking Cancellation"),
-                "Dear Customer,\nYour Transport ID:" + (status.equals("Booking") ? transportDAO.getBookingId() : status.equals("Update") ? transportIdTxt.getText() : transportIdTxt.getText()) + "\nYour Customer ID:" + custIdTxt.getText() + "\nName:" + nameTxt.getText() +
+                "Dear Customer,\nYour Transport ID:" + (status.equals("Booking") ? transportBO.getBookingId() : status.equals("Update") ? transportIdTxt.getText() : transportIdTxt.getText()) + "\nYour Customer ID:" + custIdTxt.getText() + "\nName:" + nameTxt.getText() +
                         "\nRoom Number:" + "\nFrom:" + DateTimeDtPckr.getValue() + "  " + startTimeTxt.getText() + "\nDestination:" + destinationTxt.getText() + "\nTotal Cost:" + costTxt.getText() +
                         "\n" + (status.equals("Booking") ? "Transport Booking Successful!" : status.equals("Update") ? "Transport Booking Update Successfully" : "Transport Booking Cancelled!" + "\n\nThank you for using our service!\n\nHotel Eden Garden,\nInamaluwa,\nSeegiriya"));
     }

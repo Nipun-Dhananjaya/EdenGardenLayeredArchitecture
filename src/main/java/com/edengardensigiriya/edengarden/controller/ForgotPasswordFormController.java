@@ -1,7 +1,10 @@
 package com.edengardensigiriya.edengarden.controller;
 
+import com.edengardensigiriya.edengarden.bo.BOFactory;
+import com.edengardensigiriya.edengarden.bo.custom.ForgotPasswordBO;
 import com.edengardensigiriya.edengarden.dao.DAOFactory;
 import com.edengardensigiriya.edengarden.dao.custom.UserDAO;
+import com.edengardensigiriya.edengarden.dto.UserDTO;
 import com.edengardensigiriya.edengarden.entity.User;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXMLLoader;
@@ -28,7 +31,7 @@ public class ForgotPasswordFormController {
     public Button backBtn;
     public TextField txtOldUserName;
     public TextField txtNewUserName;
-    UserDAO userDAO= (UserDAO) DAOFactory.getDaoFactory().getDAO(DAOFactory.DAOTypes.USER);
+    ForgotPasswordBO forgotPasswordBO= (ForgotPasswordBO) BOFactory.getBoFactory().getBO(BOFactory.BOTypes.FORGOT_PASSWORD);
 
     public void loadBrowserOnAction(ActionEvent actionEvent) {
         try {
@@ -49,9 +52,9 @@ public class ForgotPasswordFormController {
         Stage stage = (Stage) root.getScene().getWindow();
         boolean isDone;
         if (stage.getTitle().equals("Change Receptionist Password")){
-            isDone=userDAO.changePwd(new User(txtOldUserName.getText(),txtOldPwd.getText(),txtNewUserName.getText(),txtNewPwd.getText(),txtReEnterPwd.getText(),"Receptionist"));
+            isDone=forgotPasswordBO.changePwd(new UserDTO(txtOldUserName.getText(),txtOldPwd.getText(),txtNewUserName.getText(),txtNewPwd.getText(),txtReEnterPwd.getText(),"Receptionist"));
         }else{
-            isDone=userDAO.changePwd(new User(txtOldUserName.getText(),txtOldPwd.getText(),txtNewUserName.getText(),txtNewPwd.getText(),txtReEnterPwd.getText(),"Manager"));
+            isDone=forgotPasswordBO.changePwd(new UserDTO(txtOldUserName.getText(),txtOldPwd.getText(),txtNewUserName.getText(),txtNewPwd.getText(),txtReEnterPwd.getText(),"Manager"));
         }
         if (isDone){
             new Alert(Alert.AlertType.INFORMATION, "Username and Password Changed!").showAndWait();

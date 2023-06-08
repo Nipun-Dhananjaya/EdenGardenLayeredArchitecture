@@ -1,5 +1,7 @@
 package com.edengardensigiriya.edengarden.controller;
 
+import com.edengardensigiriya.edengarden.bo.BOFactory;
+import com.edengardensigiriya.edengarden.bo.custom.BookingBO;
 import com.edengardensigiriya.edengarden.dao.DAOFactory;
 import com.edengardensigiriya.edengarden.dao.custom.BookingDAO;
 import com.edengardensigiriya.edengarden.dao.custom.PaymentDAO;
@@ -57,8 +59,7 @@ public class BookingManageFormController  {
     public TableColumn columnDrtion;
     public TableColumn columnAvailability;
     public TableColumn columnBookedOn;
-    PaymentDAO paymentDAO= (PaymentDAO) DAOFactory.getDaoFactory().getDAO(DAOFactory.DAOTypes.PAYMENT);
-    BookingDAO bookingDAO= (BookingDAO) DAOFactory.getDaoFactory().getDAO(DAOFactory.DAOTypes.BOOKING);
+    BookingBO bookingBO= (BookingBO) BOFactory.getBoFactory().getBO(BOFactory.BOTypes.BOOKING);
 
     public void initialize() throws SQLException, ClassNotFoundException {
         roomTypes.clear();
@@ -67,7 +68,7 @@ public class BookingManageFormController  {
 
         ObservableList<String> roomType = FXCollections.observableList(roomTypes);
         roomTypeCmbBx.setItems(roomType);
-        bookingDAO.updateStatus();
+        bookingBO.updateStatus();
         setCellValueFactory();
         getAllBookings();
         costTxt.setText("0.00");
@@ -75,20 +76,7 @@ public class BookingManageFormController  {
 
     private void getAllBookings() throws SQLException, ClassNotFoundException {
         ObservableList<BookingTM> obList = FXCollections.observableArrayList();
-        List<BookingDTO> bookList = new ArrayList<>();//bookingDAO.getAll();
-        for (Custom booking : bookingDAO.getAll()) {
-            bookList.add(new BookingDTO(
-                    booking.getBookingId(),
-                    booking.getCustId(),
-                    booking.getCustName(),
-                    booking.getRoomNo(),
-                    booking.getBookFrom(),
-                    booking.getDuration(),
-                    booking.getRoomBookingCost(),
-                    booking.getBookedOn(),
-                    booking.getRoomAvailability()
-            ));
-        }
+        List<BookingDTO> bookList = bookingBO.getAllBookings();
 
         for (BookingDTO booking : bookList) {
             obList.add(new BookingTM(
@@ -120,20 +108,7 @@ public class BookingManageFormController  {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         try {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
-            List<BookingUIDTO> bookList =new ArrayList<>();// bookingDAO.search(bookingIdTxt.getText());
-            for (Custom custom:bookingDAO.search(bookingIdTxt.getText())) {
-                bookList.add(new BookingUIDTO(
-                        custom.getBookingId(),
-                        custom.getCustId(),
-                        custom.getCustName(),
-                        custom.getRoomType(),
-                        custom.getRoomNo(),
-                        custom.getSleepCount(),
-                        custom.getBookFrom(),
-                        custom.getDuration(),
-                        custom.getRoomBookingCost()
-                ));
-            }
+            List<BookingUIDTO> bookList =bookingBO.searchBookings(bookingIdTxt.getText());
             if (!bookList.isEmpty()){
                 for (BookingUIDTO booking : bookList) {
                     bookingIdTxt.setText(booking.getBookingId());
@@ -167,7 +142,7 @@ public class BookingManageFormController  {
     public void searchCustomerOnAction(ActionEvent actionEvent) throws SQLException {
         try {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
-            String name=bookingDAO.searchCustomer(custIdTxt.getText());
+            String name=bookingBO.searchCustomer(custIdTxt.getText());
             if (name!=null){
                 nameTxt.setText(name);
             }
@@ -191,11 +166,11 @@ public class BookingManageFormController  {
             LocalDateTime startDate = LocalDateTime.of(startDateDtPckr.getValue(), LocalTime.parse(startTimeTxt.getText()));
             LocalDateTime endDate = LocalDateTime.of(endDateDtPckr.getValue(), LocalTime.parse(endTimeTxt.getText()));
             long duration = ChronoUnit.HOURS.between(startDate,endDate);
-            String paymentId = paymentDAO.newIdGenerate();
-            String bookingId = bookingDAO.newIdGenerate();
+            String paymentId = bookingBO.newPayIdGenerate();
+            String bookingId = bookingBO.newBookIdGenerate();
             boolean isAffected=false;
             if (isCorrectPattern()){
-                isAffected=bookingDAO.save(new Custom(bookingId, custIdTxt.getText(), String.valueOf(startDate), String.valueOf(duration), paymentId,String.valueOf(roomNumCmbBx.getValue()), String.valueOf(costTxt.getText()), String.valueOf(now),"Active","Paid"));
+                isAffected=bookingBO.saveBookings(new BookingDTO(bookingId, custIdTxt.getText(), String.valueOf(startDate), String.valueOf(duration), paymentId,String.valueOf(roomNumCmbBx.getValue()), String.valueOf(costTxt.getText()), String.valueOf(now),"Active","Paid"));
             }
             if (isAffected) {
                 new Alert(Alert.AlertType.INFORMATION, "Booking Successful!").showAndWait();
@@ -219,11 +194,11 @@ public class BookingManageFormController  {
             Optional<ButtonType> comfirm=new Alert(Alert.AlertType.CONFIRMATION, "Do you want to cancel the booking?").showAndWait();
             if (comfirm.isPresent()){
                 String bookingId = bookingIdTxt.getText();
-                String paymentId = bookingDAO.getPaymentId(bookingId);
+                String paymentId = bookingBO.getPaymentId(bookingId);
                 boolean isAffected=false;
                 if (isCorrectPattern()){
                     System.out.println("correct");
-                    isAffected=bookingDAO.cancelBooking(new Custom(bookingId,paymentId,"Cancelled",String.valueOf(roomNumCmbBx.getValue()),0));
+                    isAffected=bookingBO.cancelBookings(new BookingDTO(bookingId,paymentId,"Cancelled",String.valueOf(roomNumCmbBx.getValue())));
                 }
                 if (isAffected) {
                     new Alert(Alert.AlertType.INFORMATION, "Booking Cancelled!").showAndWait();
@@ -250,11 +225,11 @@ public class BookingManageFormController  {
             LocalDateTime endDate = LocalDateTime.of(endDateDtPckr.getValue(), LocalTime.parse(endTimeTxt.getText()));
             long duration = ChronoUnit.HOURS.between(startDate,endDate);
             String bookingId = bookingIdTxt.getText();
-            String paymentId = bookingDAO.getPaymentId(bookingId);
-            LocalDateTime paidDateTime = bookingDAO.getPaidDateTime(bookingId);
+            String paymentId = bookingBO.getPaymentId(bookingId);
+            LocalDateTime paidDateTime = bookingBO.getPaidDateTime(bookingId);
             boolean isAffected=false;
             if (isCorrectPattern()){
-                isAffected=bookingDAO.update(new Custom(bookingId, String.valueOf(startDate), String.valueOf(duration), paymentId,String.valueOf(roomNumCmbBx.getValue()), String.valueOf(costTxt.getText()),"Active","Paid",0));
+                isAffected=bookingBO.updateBookings(new BookingDTO(bookingId, String.valueOf(startDate), String.valueOf(duration), paymentId,String.valueOf(roomNumCmbBx.getValue()), String.valueOf(costTxt.getText()),"Active","Paid"));
             }
             if (isAffected) {
                 new Alert(Alert.AlertType.INFORMATION, "Booking Updated!").showAndWait();
@@ -290,19 +265,19 @@ public class BookingManageFormController  {
     public void setSelectedRoomTypeNoOnAction(ActionEvent actionEvent) {
         roomNumCmbBx.setItems(null);
         if (roomTypeCmbBx.getSelectionModel().getSelectedItem().equals("Deluxe Room")){
-            bookingDAO.setRoomNumbers("Deluxe Room");
-            ObservableList<String> roomNo = FXCollections.observableList(bookingDAO.deluxeRoomNo);
+            bookingBO.setRoomNumbers("Deluxe Room");
+            ObservableList<String> roomNo = FXCollections.observableList(BookingDAO.deluxeRoomNo);
             roomNumCmbBx.setItems(roomNo);
         }else{
-            bookingDAO.setRoomNumbers("Standard Room");
-            ObservableList<String> roomNo = FXCollections.observableList(bookingDAO.standardRoomNo);
+            bookingBO.setRoomNumbers("Standard Room");
+            ObservableList<String> roomNo = FXCollections.observableList(BookingDAO.standardRoomNo);
             roomNumCmbBx.setItems(roomNo);
         }
     }
 
     public void setSleepCountOnAction(ActionEvent actionEvent) {
         sleepsTxt.setText("");
-        sleepsTxt.setText(bookingDAO.setSleepCount(String.valueOf(roomNumCmbBx.getSelectionModel().getSelectedItem())));
+        sleepsTxt.setText(bookingBO.setSleepCount(String.valueOf(roomNumCmbBx.getSelectionModel().getSelectedItem())));
     }
     private boolean isCorrectPattern(){
         if (RegExPatterns.getNamePattern().matcher(nameTxt.getText()).matches()  && RegExPatterns.getDoublePattern().matcher(costTxt.getText()).matches() && startTimeTxt.getText().matches("^(2[0-3]|[01]?[0-9]):([0-5]?[0-9]):([0-5]?[0-9])$") && endTimeTxt.getText().matches("^(2[0-3]|[01]?[0-9]):([0-5]?[0-9]):([0-5]?[0-9])$")){
@@ -311,9 +286,9 @@ public class BookingManageFormController  {
         return false;
     }
     public void sendMail(String status) throws MessagingException, GeneralSecurityException, IOException, SQLException {
-        SendEmail.sendMail(bookingDAO.getEmail(custIdTxt.getText()),
+        SendEmail.sendMail(bookingBO.getEmail(custIdTxt.getText()),
                 (status.equals("Booking")?"Room Booking":status.equals("Update")?"Room Booking Update":"Room Booking Cancellation"),
-                "Dear Customer,\nYour Booking ID:"+(status.equals("Booking")?bookingDAO.getBookingId():status.equals("Update")?bookingIdTxt.getText():bookingIdTxt.getText())+"\nYour Customer ID:"+custIdTxt.getText()+"\nName:"+nameTxt.getText()+
+                "Dear Customer,\nYour Booking ID:"+(status.equals("Booking")?bookingBO.getBookingId():status.equals("Update")?bookingIdTxt.getText():bookingIdTxt.getText())+"\nYour Customer ID:"+custIdTxt.getText()+"\nName:"+nameTxt.getText()+
                 "\nRoom Number:"+ roomNumCmbBx.getSelectionModel().getSelectedItem()+"\nFrom:"+startDateDtPckr.getValue()+"  "+startTimeTxt.getText()+"\nTo:"+endDateDtPckr.getValue()+"  "+endTimeTxt.getText()+"\nTotal Cost:"+ costTxt.getText()+
                 "\n"+(status.equals("Booking")?"Room Booking Successful!":status.equals("Update")?"Room Booking Update Successfully":"Room Booking Cancelled!"+"\n\nThank you for using our service!\n\nHotel Eden Garden,\nInamaluwa,\nSeegiriya"));
     }

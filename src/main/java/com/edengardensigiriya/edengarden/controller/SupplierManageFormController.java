@@ -1,12 +1,13 @@
 package com.edengardensigiriya.edengarden.controller;
 
+import com.edengardensigiriya.edengarden.bo.BOFactory;
+import com.edengardensigiriya.edengarden.bo.custom.SupplierBO;
 import com.edengardensigiriya.edengarden.dao.DAOFactory;
 import com.edengardensigiriya.edengarden.dao.custom.SupplierDAO;
 import com.edengardensigiriya.edengarden.db.DBConnection;
 import com.edengardensigiriya.edengarden.dto.*;
 import com.edengardensigiriya.edengarden.dto.tm.SupplierTM;
 import com.edengardensigiriya.edengarden.entity.Supplier;
-import com.edengardensigiriya.edengarden.model.*;
 import com.edengardensigiriya.edengarden.util.RegExPatterns;
 import com.edengardensigiriya.edengarden.util.SendEmail;
 import javafx.collections.FXCollections;
@@ -51,7 +52,7 @@ public class SupplierManageFormController {
     public TableColumn columnContractEndDate;
     public ComboBox contactCmbBx;
     static String con;
-    SupplierDAO supplierDAO= (SupplierDAO) DAOFactory.getDaoFactory().getDAO(DAOFactory.DAOTypes.SUPPLIER);
+    SupplierBO supplierBO= (SupplierBO) BOFactory.getBoFactory().getBO(BOFactory.BOTypes.SUPPLIER);
 
     public void initialize() throws SQLException, ClassNotFoundException {
         setCellValueFactory();
@@ -60,19 +61,7 @@ public class SupplierManageFormController {
 
     private void getAllSuppliers() throws SQLException, ClassNotFoundException {
         ObservableList<SupplierTM> obList = FXCollections.observableArrayList();
-        List<SupplierDTO> supplierList = new ArrayList<>();
-        for (Supplier supplier : supplierDAO.getAll()) {
-            supplierList.add(new SupplierDTO(
-                    supplier.getSuppId(),
-                    supplier.getSuppName(),
-                    supplier.getSuppAddress(),
-                    supplier.getSuppEmail(),
-                    supplier.getSuppContact(),
-                    supplier.getItemType(),
-                    supplier.getContactStartDate(),
-                    supplier.getContactEndDate()
-            ));
-        }
+        List<SupplierDTO> supplierList = supplierBO.getAllSuppliers();
 
         for (SupplierDTO supplier : supplierList) {
             obList.add(new SupplierTM(
@@ -101,20 +90,9 @@ public class SupplierManageFormController {
     public void idSearchOnAction(ActionEvent actionEvent) throws SQLException {
         try {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
-            supplierDAO.contact.clear();
-            List<SupplierDTO> suppList = new ArrayList<>();
-            for (Supplier supplier : supplierDAO.search(idTxt.getText())) {
-                suppList.add(new SupplierDTO(
-                        supplier.getSuppId(),
-                        supplier.getSuppName(),
-                        supplier.getSuppAddress(),
-                        supplier.getSuppEmail(),
-                        supplier.getSuppContact(),
-                        supplier.getItemType(),
-                        supplier.getContactStartDate(),
-                        supplier.getContactEndDate()
-                ));
-            }
+            SupplierDAO.contact.clear();
+            List<SupplierDTO> suppList = supplierBO.searchSuppliers(idTxt.getText());
+
             if (!suppList.isEmpty()){
                 for (SupplierDTO supplier : suppList) {
                     nameTxt.setText(supplier.getSuppName());
@@ -143,8 +121,8 @@ public class SupplierManageFormController {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
             boolean isAffected=false;
             if (isCorrectPattern()){
-                isAffected = supplierDAO.save(new Supplier(supplierDAO.newIdGenerate(),
-                        nameTxt.getText(), addressTxt.getText(), emailTxt.getText(), String.join(" , ", supplierDAO.contact),
+                isAffected = supplierBO.saveSuppliers(new SupplierDTO(supplierBO.newIdGenerate(),
+                        nameTxt.getText(), addressTxt.getText(), emailTxt.getText(), String.join(" , ", SupplierDAO.contact),
                         itemTypeTxt.getText(),String.valueOf(startDtPckr.getValue()),String.valueOf(endDtPckr.getValue())));
             }
             if (isAffected) {
@@ -168,8 +146,8 @@ public class SupplierManageFormController {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
             boolean isAffected=false;
             if (isCorrectPattern()){
-                isAffected = supplierDAO.update(new Supplier(idTxt.getText(),
-                        nameTxt.getText(), addressTxt.getText(), emailTxt.getText(), String.join(" , ", supplierDAO.contact),
+                isAffected = supplierBO.updateSuppliers(new SupplierDTO(idTxt.getText(),
+                        nameTxt.getText(), addressTxt.getText(), emailTxt.getText(), String.join(" , ", SupplierDAO.contact),
                         itemTypeTxt.getText(),String.valueOf(startDtPckr.getValue()),String.valueOf(endDtPckr.getValue())));
             }
             if (isAffected) {
@@ -196,7 +174,7 @@ public class SupplierManageFormController {
             if (comfirm.isPresent()){
                 boolean isAffected=false;
                 if (isCorrectPattern()){
-                    isAffected = supplierDAO.delete(idTxt.getText());
+                    isAffected = supplierBO.removeSuppliers(idTxt.getText());
                 }
                 if (isAffected) {
                     new Alert(Alert.AlertType.INFORMATION, "Supplier Removed!").showAndWait();
@@ -221,7 +199,7 @@ public class SupplierManageFormController {
         emailTxt.setText("");
         addressTxt.setText("");
         contactTxt.setText("");
-        supplierDAO.contact.clear();
+        SupplierDAO.contact.clear();
         setCellValueFactory();
         getAllSuppliers();
     }
@@ -237,7 +215,7 @@ public class SupplierManageFormController {
         ObservableList<String> cont = FXCollections.observableList(conList);
         int length=contacts.length;
         while (length>0){
-            supplierDAO.contact.add(contacts[length-1]);
+            SupplierDAO.contact.add(contacts[length-1]);
             length-=1;
         }
         return cont;
@@ -246,14 +224,14 @@ public class SupplierManageFormController {
     public void addContactOnAction(ActionEvent actionEvent) {
         if (contactCmbBx.getItems().contains(con)) {
             System.out.println(" 12: "+con);
-            supplierDAO.contact.remove(con);
+            SupplierDAO.contact.remove(con);
         }
         if (RegExPatterns.getMobilePattern().matcher(contactTxt.getText()).matches()){
-            boolean isAlreadyHas = supplierDAO.addContact(contactTxt.getText());
+            boolean isAlreadyHas = supplierBO.addContact(contactTxt.getText());
             if (!isAlreadyHas) {
                 new Alert(Alert.AlertType.WARNING, "Contact Already Added!").showAndWait();
             } else {
-                ObservableList<String> cont = FXCollections.observableList(supplierDAO.contact);
+                ObservableList<String> cont = FXCollections.observableList(SupplierDAO.contact);
                 contactCmbBx.setItems(cont);
                 contactCmbBx.setValue("Contact List");
                 contactTxt.setText("");
@@ -272,7 +250,7 @@ public class SupplierManageFormController {
     public void sendMail(String status) throws MessagingException, GeneralSecurityException, IOException, SQLException {
         SendEmail.sendMail(emailTxt.getText(),
                 (status.equals("Add")?"Register As Supplier!":status.equals("Update")?"Update Supplier Details!":"Remove Supplier"),
-                "Your Supplier ID:"+(status.equals("Add")?supplierDAO.getSuppId():status.equals("Update")?idTxt.getText():idTxt.getText())+
+                "Your Supplier ID:"+(status.equals("Add")?supplierBO.getSuppId():status.equals("Update")?idTxt.getText():idTxt.getText())+
                         "\nItem Type:"+ itemTypeTxt.getText()+"\nContract Start From:"+startDtPckr.getValue()+"\nContract Valid To:"+endDtPckr.getValue()+
                         "\n"+(status.equals("Add")?"Registered As Supplier Successfully!":status.equals("Update")?"Supplier Details Update Successfully":"Supplier Removed Successfully!"+"\n\nThank you!\n\nHotel Eden Garden,\nInamaluwa,\nSeegiriya"));
     }

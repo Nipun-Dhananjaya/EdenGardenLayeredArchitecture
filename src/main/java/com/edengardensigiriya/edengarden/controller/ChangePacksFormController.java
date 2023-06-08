@@ -1,5 +1,8 @@
 package com.edengardensigiriya.edengarden.controller;
 
+import com.edengardensigiriya.edengarden.bo.BOFactory;
+import com.edengardensigiriya.edengarden.bo.custom.ChangePacksBO;
+import com.edengardensigiriya.edengarden.bo.custom.ChangeUserBO;
 import com.edengardensigiriya.edengarden.dao.DAOFactory;
 import com.edengardensigiriya.edengarden.dao.custom.QueryDAO;
 import com.edengardensigiriya.edengarden.db.DBConnection;
@@ -21,12 +24,12 @@ public class ChangePacksFormController{
     public TextField txtNewPrice;
     public ComboBox packagesCmb;
     public static ArrayList<String> roomPrices = new ArrayList<>();
-    QueryDAO queryDAO= (QueryDAO) DAOFactory.getDaoFactory().getDAO(DAOFactory.DAOTypes.QUERY);
+    ChangePacksBO changePacksBO= (ChangePacksBO) BOFactory.getBoFactory().getBO(BOFactory.BOTypes.CHANGE_PACKS);
 
     public void initialize() throws SQLException {
         txtNewPrice.setDisable(true);
         txtSleepCount.setDisable(true);
-        queryDAO.setArrayList();
+        changePacksBO.setArrayList();
         ObservableList<String> roomPack = FXCollections.observableList(roomPrices);
         packagesCmb.setItems(roomPack);
     }
@@ -35,7 +38,7 @@ public class ChangePacksFormController{
             DBConnection.getInstance().getConnection().setAutoCommit(false);
             boolean isAffected=false;
             if (isCorrectPattern()) {
-                isAffected = queryDAO.changePakage(String.valueOf(packagesCmb.getSelectionModel().getSelectedItem()),txtNewPrice.getText());
+                isAffected = changePacksBO.changePackage(String.valueOf(packagesCmb.getSelectionModel().getSelectedItem()),txtNewPrice.getText());
             }
             if (isAffected) {
                 new Alert(Alert.AlertType.INFORMATION, "Package Updated!").showAndWait();
@@ -54,7 +57,7 @@ public class ChangePacksFormController{
 
     private void resetPage() throws SQLException {
         roomPrices.clear();
-        queryDAO.setArrayList();
+        changePacksBO.setArrayList();
         ObservableList<String> roomPack = FXCollections.observableList(roomPrices);
         packagesCmb.setItems(roomPack);
         txtSleepCount.setText("");
@@ -64,7 +67,7 @@ public class ChangePacksFormController{
     public void selectPriceOnAction(ActionEvent actionEvent) throws SQLException {
         txtNewPrice.setDisable(false);
         String price= String.valueOf(packagesCmb.getSelectionModel().getSelectedItem());
-        txtSleepCount.setText(queryDAO.getSleepCount(price));
+        txtSleepCount.setText(changePacksBO.getSleepCount(price));
         if (txtSleepCount.getText().equals("No Rooms Available")){
             txtNewPrice.setDisable(true);
         }

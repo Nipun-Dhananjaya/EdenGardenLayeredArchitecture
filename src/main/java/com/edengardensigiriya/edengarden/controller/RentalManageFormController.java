@@ -1,5 +1,7 @@
 package com.edengardensigiriya.edengarden.controller;
 
+import com.edengardensigiriya.edengarden.bo.BOFactory;
+import com.edengardensigiriya.edengarden.bo.custom.RentalBO;
 import com.edengardensigiriya.edengarden.dao.DAOFactory;
 import com.edengardensigiriya.edengarden.dao.custom.PaymentDAO;
 import com.edengardensigiriya.edengarden.dao.custom.RentalDAO;
@@ -68,15 +70,14 @@ public class RentalManageFormController {
     public TableView carRentalTbl;
     public TableColumn columnStatus;
     public TableColumn columnStatus1;
-    RentalDAO rentalDAO= (RentalDAO) DAOFactory.getDaoFactory().getDAO(DAOFactory.DAOTypes.RENTAL);
-    PaymentDAO paymentDAO= (PaymentDAO) DAOFactory.getDaoFactory().getDAO(DAOFactory.DAOTypes.PAYMENT);
+    RentalBO rentalBO= (RentalBO) BOFactory.getBoFactory().getBO(BOFactory.BOTypes.RENTAL);
 
-    public void initialize() throws SQLException {
+    public void initialize() throws SQLException, ClassNotFoundException {
         vehicleType.add("BicycleDTO");
         vehicleType.add("Car");
         ObservableList<String> Type = FXCollections.observableList(vehicleType);
         vehicleCmbBx.setItems(Type);
-        rentalDAO.updateStatus();
+        rentalBO.updateStatus();
         setCarCellValueFactory();
         getAllCarRentals();
         setBicycleCellValueFactory();
@@ -107,23 +108,9 @@ public class RentalManageFormController {
         columnStatus1.setCellValueFactory(new PropertyValueFactory<>("rentStatus"));
     }
 
-    private void getAllCarRentals() throws SQLException {
+    private void getAllCarRentals() throws SQLException, ClassNotFoundException {
         ObservableList<RentalTM> obList = FXCollections.observableArrayList();
-        List<RentalDTO> rentalList = new ArrayList<>();
-
-        for (Custom rental : rentalDAO.getAllCars()) {
-            rentalList.add(new RentalDTO(
-                    rental.getRentId(),
-                    rental.getCustId(),
-                    rental.getCustName(),
-                    rental.getVehicleType(),
-                    rental.getVehicleId(),
-                    rental.getRentFrom(),
-                    rental.getRentDuration(),
-                    rental.getRentCost(),
-                    rental.getRentStatus()
-            ));
-        }
+        List<RentalDTO> rentalList = rentalBO.getAllCarRentals();
         for (RentalDTO rental : rentalList) {
             obList.add(new RentalTM(
                     rental.getRentId(),
@@ -140,23 +127,10 @@ public class RentalManageFormController {
         carRentalTbl.setItems(obList);
     }
 
-    private void getAllBicycleRentals() throws SQLException {
+    private void getAllBicycleRentals() throws SQLException, ClassNotFoundException {
         ObservableList<RentalTM> obList = FXCollections.observableArrayList();
-        List<RentalDTO> rentalList = new ArrayList<>();
+        List<RentalDTO> rentalList = rentalBO.getAllBicycleRentals();
 
-        for (Custom rental : rentalDAO.getAllBicycles()) {
-            rentalList.add(new RentalDTO(
-                    rental.getRentId(),
-                    rental.getCustId(),
-                    rental.getCustName(),
-                    rental.getVehicleType(),
-                    rental.getVehicleId(),
-                    rental.getRentFrom(),
-                    rental.getRentDuration(),
-                    rental.getRentCost(),
-                    rental.getRentStatus()
-            ));
-        }
         for (RentalDTO rental : rentalList) {
             obList.add(new RentalTM(
                     rental.getRentId(),
@@ -177,21 +151,7 @@ public class RentalManageFormController {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         try {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
-            List<RentalUIDTO> rentList = new ArrayList<>();
-
-            for (Custom rental : rentalDAO.search(bookingIdTxt.getText())) {
-                rentList.add(new RentalUIDTO(
-                        rental.getRentId(),
-                        rental.getCustId(),
-                        rental.getCustName(),
-                        rental.getVehicle(),
-                        rental.getVehicleType(),
-                        rental.getVehicleId(),
-                        rental.getRentFrom(),
-                        rental.getRentDuration(),
-                        rental.getRentCost()
-                ));
-            }
+            List<RentalUIDTO> rentList = rentalBO.searchRentals(bookingIdTxt.getText());
             if (!rentList.isEmpty()){
                 for (RentalUIDTO rental : rentList) {
                     bookingIdTxt.setText(rental.getBookingId());
@@ -224,7 +184,7 @@ public class RentalManageFormController {
     public void searchCustomerOnAction(ActionEvent actionEvent) throws SQLException {
         try {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
-            String name= rentalDAO.searchCustomer(custIdTxt.getText());
+            String name= rentalBO.searchCustomer(custIdTxt.getText());
             if (name!=null){
                 nameTxt.setText(name);
             }
@@ -246,11 +206,11 @@ public class RentalManageFormController {
             Optional<ButtonType> comfirm=new Alert(Alert.AlertType.CONFIRMATION, "Do you want to cancel the booking?").showAndWait();
             if (comfirm.isPresent()){
                 String bookingId = bookingIdTxt.getText();
-                String paymentId = rentalDAO.getPaymentId(bookingId);
+                String paymentId = rentalBO.getPaymentId(bookingId);
                 boolean isAffected=false;
                 if (isCorrectPattern()){
-                    isAffected=rentalDAO.cancelRental(new Custom(bookingId, custIdTxt.getText(),String.valueOf(vehicleCmbBx.getSelectionModel().getSelectedItem()),
-                            String.valueOf(vehicleIdCmbBx.getSelectionModel().getSelectedItem()), paymentId,"Cancelled",(float) 10.5));
+                    isAffected=rentalBO.cancelRentals(new RentalDTO(bookingId, custIdTxt.getText(),String.valueOf(vehicleCmbBx.getSelectionModel().getSelectedItem()),
+                            String.valueOf(vehicleIdCmbBx.getSelectionModel().getSelectedItem()), paymentId,"Cancelled"));
                 }
                 if (isAffected) {
                     new Alert(Alert.AlertType.INFORMATION, "Rental Cancelled!").showAndWait();
@@ -264,7 +224,7 @@ public class RentalManageFormController {
                 }
             }
             DBConnection.getInstance().getConnection().commit();
-        } catch (SQLException e) {
+        } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
             DBConnection.getInstance().getConnection().rollback();
         }finally{
@@ -279,10 +239,10 @@ public class RentalManageFormController {
             LocalDateTime startDate = LocalDateTime.of(startDateDtPckr.getValue(), LocalTime.parse(startTimeTxt.getText()));
             long duration = Long.parseLong(durationTxt.getText());
             String bookingId = bookingIdTxt.getText();
-            String paymentId = rentalDAO.getPaymentId(bookingId);
+            String paymentId = rentalBO.getPaymentId(bookingId);
             boolean isAffected=false;
             if (isCorrectPattern()){
-                isAffected=rentalDAO.update(new Custom(bookingId, custIdTxt.getText(), String.valueOf(startDate), String.valueOf(duration), paymentId,
+                isAffected=rentalBO.updateRentals(new RentalDTO(bookingId, custIdTxt.getText(), String.valueOf(startDate), String.valueOf(duration), paymentId,
                         String.valueOf(vehicleCmbBx.getValue()),String.valueOf(vehicleTypeCmbBx.getValue()),
                         String.valueOf(vehicleIdCmbBx.getValue()), String.valueOf(costTxt.getText()),true));
             }
@@ -312,11 +272,11 @@ public class RentalManageFormController {
             LocalDateTime now = LocalDateTime.now();
             LocalDateTime startDate = LocalDateTime.of(startDateDtPckr.getValue(), LocalTime.parse(startTimeTxt.getText()));
             long duration = Long.valueOf(durationTxt.getText());
-            String paymentId = paymentDAO.newIdGenerate();
-            String rentalId = rentalDAO.newIdGenerate();
+            String paymentId = rentalBO.newPayIdGenerate();
+            String rentalId = rentalBO.newRentIdGenerate();
             boolean isAffected=false;
             if (isCorrectPattern()){
-                isAffected=rentalDAO.save(new Custom(rentalId, custIdTxt.getText(), String.valueOf(startDate), String.valueOf(duration), paymentId, costTxt.getText(),
+                isAffected=rentalBO.saveRentals(new RentalDTO(rentalId, custIdTxt.getText(), String.valueOf(startDate), String.valueOf(duration), paymentId, costTxt.getText(),
                         String.valueOf(vehicleCmbBx.getSelectionModel().getSelectedItem()),String.valueOf(vehicleTypeCmbBx.getSelectionModel().getSelectedItem()),
                         String.valueOf(vehicleIdCmbBx.getSelectionModel().getSelectedItem()),0,true));
             }
@@ -336,15 +296,10 @@ public class RentalManageFormController {
         }
     }
 
-    public void loadAvailableVehiclesOnAction(ActionEvent actionEvent) throws SQLException {
+    public void loadAvailableVehiclesOnAction(ActionEvent actionEvent) throws SQLException, ClassNotFoundException {
         vehicleId.clear();
-        List<RentalDTO> resultSet=new ArrayList<>();
-        for (Custom custom:rentalDAO.getVehicleId(String.valueOf(vehicleCmbBx.getSelectionModel().getSelectedItem()),
-                String.valueOf(vehicleTypeCmbBx.getSelectionModel().getSelectedItem()))) {
-            resultSet.add(new RentalDTO(
-                    custom.getVehicleId()
-            ));
-        }
+        List<RentalDTO> resultSet=rentalBO.loadAllAvailableVehicles(String.valueOf(vehicleCmbBx.getSelectionModel().getSelectedItem()),
+                String.valueOf(vehicleTypeCmbBx.getSelectionModel().getSelectedItem()));
         for (int i = 0; i < resultSet.size(); i++) {
             vehicleId.add(resultSet.get(i).getVehicleId());
         }
@@ -386,7 +341,7 @@ public class RentalManageFormController {
             vehicleTypeCmbBx.setItems(bicycleType);
         }
     }
-    public void resetPage() throws SQLException {
+    public void resetPage() throws SQLException, ClassNotFoundException {
         bookingIdTxt.setText("");
         custIdTxt.setText("");
         nameTxt.setText("");
@@ -408,9 +363,9 @@ public class RentalManageFormController {
         return false;
     }
     public void sendMail(String status) throws MessagingException, GeneralSecurityException, IOException, SQLException {
-        SendEmail.sendMail(rentalDAO.getEmail(custIdTxt.getText()),
+        SendEmail.sendMail(rentalBO.getEmail(custIdTxt.getText()),
                 (status.equals("Booking")?"Rent A Vehicle":status.equals("Update")?"Rental Update":"Rental Cancellation"),
-                "Dear Customer,\nYour Rental ID:"+(status.equals("Booking")?rentalDAO.getBookingId():status.equals("Update")?bookingIdTxt.getText():bookingIdTxt.getText())+"\nYour Customer ID:"+custIdTxt.getText()+"\nName:"+nameTxt.getText()+
+                "Dear Customer,\nYour Rental ID:"+(status.equals("Booking")?rentalBO.getRentalId():status.equals("Update")?bookingIdTxt.getText():bookingIdTxt.getText())+"\nYour Customer ID:"+custIdTxt.getText()+"\nName:"+nameTxt.getText()+
                         "\nVehicle Type:"+ vehicleCmbBx.getSelectionModel().getSelectedItem()+"\nVehicle Model:"+ vehicleTypeCmbBx.getSelectionModel().getSelectedItem()+"\nVehicle ID:"+ vehicleIdCmbBx.getSelectionModel().getSelectedItem()+"\nFrom:"+startDateDtPckr.getValue()+"  "+startTimeTxt.getText()+"\nDuration: "+durationTxt.getText()+"\nTotal Cost:"+ costTxt.getText()+
                         "\n"+(status.equals("Booking")?"Rent Successful!":status.equals("Update")?"Rental Update Successfully":"Vehicle Rental Cancelled!"+"\n\nThank you for using our service!\n\nHotel Eden Garden,\nInamaluwa,\nSeegiriya"));
     }

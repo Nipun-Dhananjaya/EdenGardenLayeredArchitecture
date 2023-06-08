@@ -1,5 +1,7 @@
 package com.edengardensigiriya.edengarden.controller;
 
+import com.edengardensigiriya.edengarden.bo.BOFactory;
+import com.edengardensigiriya.edengarden.bo.custom.CustomerBO;
 import com.edengardensigiriya.edengarden.dao.DAOFactory;
 import com.edengardensigiriya.edengarden.dao.custom.CustomerDAO;
 import com.edengardensigiriya.edengarden.db.DBConnection;
@@ -48,7 +50,7 @@ public class CustomerManageFormController{
     public Button updateBtn;
     public ComboBox contactCmbBx;
     static String con;
-    CustomerDAO customer= (CustomerDAO) DAOFactory.getDaoFactory().getDAO(DAOFactory.DAOTypes.CUSTOMER);
+    CustomerBO customer= (CustomerBO) BOFactory.getBoFactory().getBO(BOFactory.BOTypes.CUSTOMER);
 
     public void initialize() throws SQLException, ClassNotFoundException {
         setCellValueFactory();
@@ -57,18 +59,7 @@ public class CustomerManageFormController{
 
     private void getAllCustomers() throws SQLException, ClassNotFoundException {
         ObservableList<CustomerTM> obList = FXCollections.observableArrayList();
-        List<CustomerDTO> cusList = new ArrayList<>();
-        for (Customer cust:customer.getAll()) {
-            cusList.add(new CustomerDTO(
-                    cust.getCustId(),
-                    cust.getCustName(),
-                    cust.getCustNic(),
-                    cust.getCustEmail(),
-                    cust.getCustAddress(),
-                    cust.getCustContact(),
-                    cust.getCustGender()
-            ));
-        }
+        List<CustomerDTO> cusList = customer.getAllCustomers();
 
         for (CustomerDTO customerDTO : cusList) {
             obList.add(new CustomerTM(
@@ -98,19 +89,8 @@ public class CustomerManageFormController{
     public void idSearchOnAction(ActionEvent actionEvent) throws SQLException {
         try {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
-            customer.contact.clear();
-            List<CustomerDTO> cusList = new ArrayList<>();
-            for (Customer cust:customer.search(idTxt.getText())) {
-                cusList.add(new CustomerDTO(
-                        cust.getCustId(),
-                        cust.getCustName(),
-                        cust.getCustNic(),
-                        cust.getCustEmail(),
-                        cust.getCustAddress(),
-                        cust.getCustContact(),
-                        cust.getCustGender()
-                ));
-            }
+            CustomerDAO.contact.clear();
+            List<CustomerDTO> cusList = customer.searchCustomers(idTxt.getText());
             if (!cusList.isEmpty()){
                 for (CustomerDTO customerDTO : cusList) {
                     nameTxt.setText(customerDTO.getCustName());
@@ -143,7 +123,7 @@ public class CustomerManageFormController{
         ObservableList<String> cont = FXCollections.observableList(conList);
         int length=contacts.length;
         while (length>0){
-            customer.contact.add(contacts[length-1]);
+            CustomerDAO.contact.add(contacts[length-1]);
             length-=1;
         }
         return cont;
@@ -151,14 +131,14 @@ public class CustomerManageFormController{
 
     public void addContactOnAction(ActionEvent actionEvent) {
         if (contactCmbBx.getItems().contains(con)) {
-            customer.contact.remove(con);
+            CustomerDAO.contact.remove(con);
         }
         if (RegExPatterns.getMobilePattern().matcher(contactTxt.getText()).matches()){
             boolean isAlreadyHas = customer.addContact(contactTxt.getText());
             if (!isAlreadyHas) {
                 new Alert(Alert.AlertType.WARNING, "Contact Already Added!").showAndWait();
             } else {
-                ObservableList<String> cont = FXCollections.observableList(customer.contact);
+                ObservableList<String> cont = FXCollections.observableList(CustomerDAO.contact);
                 contactCmbBx.setItems(cont);
                 contactCmbBx.setValue("Contact List");
                 contactTxt.setText("");
@@ -174,8 +154,8 @@ public class CustomerManageFormController{
             DBConnection.getInstance().getConnection().setAutoCommit(false);
             boolean isAffected=false;
             if (isCorrectPattern()){
-                isAffected = customer.save(new Customer(customer.newIdGenerate(),
-                        nameTxt.getText(), nicTxt.getText(), addressTxt.getText(), emailTxt.getText(), String.join(" , ", customer.contact),
+                isAffected = customer.saveCustomer(new CustomerDTO(customer.newIdGenerate(),
+                        nameTxt.getText(), nicTxt.getText(), addressTxt.getText(), emailTxt.getText(), String.join(" , ", CustomerDAO.contact),
                         maleRdBtn.isSelected() ? "MALE" : "FEMALE"));
             }
             if (isAffected) {
@@ -201,8 +181,8 @@ public class CustomerManageFormController{
             DBConnection.getInstance().getConnection().setAutoCommit(false);
             boolean isAffected =false;
             if (isCorrectPattern()){
-                isAffected = customer.update(new Customer(idTxt.getText(),
-                        nameTxt.getText(), nicTxt.getText(), addressTxt.getText(), emailTxt.getText(), String.join(" , ", customer.contact),
+                isAffected = customer.updateCustomer(new CustomerDTO(idTxt.getText(),
+                        nameTxt.getText(), nicTxt.getText(), addressTxt.getText(), emailTxt.getText(), String.join(" , ", CustomerDAO.contact),
                         maleRdBtn.isSelected() ? "MALE" : "FEMALE"));
             }
             if (isAffected) {
@@ -231,7 +211,7 @@ public class CustomerManageFormController{
         addressTxt.setText("");
         contactTxt.setText("");
         contactCmbBx.setValue("Contact List");
-        customer.contact.clear();
+        CustomerDAO.contact.clear();
     }
 
     public void setTxtBxValueOnAction(ActionEvent actionEvent) {

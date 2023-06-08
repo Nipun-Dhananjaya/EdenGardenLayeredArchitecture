@@ -1,5 +1,7 @@
 package com.edengardensigiriya.edengarden.controller;
 
+import com.edengardensigiriya.edengarden.bo.BOFactory;
+import com.edengardensigiriya.edengarden.bo.custom.PaymentBO;
 import com.edengardensigiriya.edengarden.dao.DAOFactory;
 import com.edengardensigiriya.edengarden.dao.custom.PaymentDAO;
 import com.edengardensigiriya.edengarden.dto.PaymentDTO;
@@ -42,7 +44,7 @@ public class PaymentManageFormController {
     public TableColumn columnTransReason;
     public TableColumn columnTransCost;
     public TableColumn columnTransStatus;
-    PaymentDAO paymentDAO= (PaymentDAO) DAOFactory.getDaoFactory().getDAO(DAOFactory.DAOTypes.PAYMENT);
+    PaymentBO paymentBO= (PaymentBO) BOFactory.getBoFactory().getBO(BOFactory.BOTypes.PAYMENT);
 
     public void initialize() throws SQLException {
         setBookingCellValueFactory();
@@ -55,17 +57,7 @@ public class PaymentManageFormController {
 
     private void getAllTransportPayments() throws SQLException {
         ObservableList<PaymentTM> obList = FXCollections.observableArrayList();
-        List<PaymentDTO> paymentList =new ArrayList<>();// paymentDAO.getAllTransportPay();
-        for (Custom payment : paymentDAO.getAllTransportPay()) {
-            paymentList.add(new PaymentDTO(
-                    payment.getPaymentId(),
-                    payment.getCustId(),
-                    payment.getPaidDateTime(),
-                    payment.getPaidReason(),
-                    payment.getPayment(),
-                    payment.getPaymentStatus()
-            ));
-        }
+        List<PaymentDTO> paymentList =paymentBO.getAllTransportPayments();
 
         for (PaymentDTO payment : paymentList) {
             obList.add(new PaymentTM(
@@ -82,18 +74,8 @@ public class PaymentManageFormController {
 
     private void getAllBookingPayments() throws SQLException {
         ObservableList<PaymentTM> obList = FXCollections.observableArrayList();
-        List<PaymentDTO> paymentList = new ArrayList<>();
+        List<PaymentDTO> paymentList = paymentBO.getAllBookingPayments();
 
-        for (Custom payment : paymentDAO.getAllBookingPay()) {
-            paymentList.add(new PaymentDTO(
-                    payment.getPaymentId(),
-                    payment.getCustId(),
-                    payment.getPaidDateTime(),
-                    payment.getPaidReason(),
-                    payment.getPayment(),
-                    payment.getPaymentStatus()
-            ));
-        }
         for (PaymentDTO payment : paymentList) {
             obList.add(new PaymentTM(
                     payment.getPaymentId(),
@@ -109,18 +91,8 @@ public class PaymentManageFormController {
 
     private void getAllRentalPayments() throws SQLException {
         ObservableList<PaymentTM> obList = FXCollections.observableArrayList();
-        List<PaymentDTO> paymentList = new ArrayList<>();
+        List<PaymentDTO> paymentList = paymentBO.getAllRentalPayments();
 
-        for (Custom payment : paymentDAO.getAllRentalPay()) {
-            paymentList.add(new PaymentDTO(
-                    payment.getPaymentId(),
-                    payment.getCustId(),
-                    payment.getPaidDateTime(),
-                    payment.getPaidReason(),
-                    payment.getPayment(),
-                    payment.getPaymentStatus()
-            ));
-        }
         for (PaymentDTO payment : paymentList) {
             obList.add(new PaymentTM(
                     payment.getPaymentId(),

@@ -1,5 +1,7 @@
 package com.edengardensigiriya.edengarden.controller;
 
+import com.edengardensigiriya.edengarden.bo.BOFactory;
+import com.edengardensigiriya.edengarden.bo.custom.BicycleBO;
 import com.edengardensigiriya.edengarden.dao.DAOFactory;
 import com.edengardensigiriya.edengarden.dao.custom.BicycleDAO;
 import com.edengardensigiriya.edengarden.db.DBConnection;
@@ -39,7 +41,7 @@ public class BicycleManageFormController implements Initializable {
     public TableColumn columnColor;
     public static ArrayList<String> bicycleTypes = new ArrayList<>();
     public TableColumn columnStatus;
-    BicycleDAO bicycleDAO= (BicycleDAO) DAOFactory.getDaoFactory().getDAO(DAOFactory.DAOTypes.BICYCLE);
+    BicycleBO bicycleBO= (BicycleBO) BOFactory.getBoFactory().getBO(BOFactory.BOTypes.BICYCLE);
 
     @SneakyThrows
     @Override
@@ -59,17 +61,7 @@ public class BicycleManageFormController implements Initializable {
     }
     private void getAllBicycles() throws SQLException, ClassNotFoundException {
         ObservableList<BicycleTM> obList = FXCollections.observableArrayList();
-        List<BicycleDTO> bicycleList = new ArrayList<>();
-        for (Bicycle bicycle:bicycleDAO.getAll()) {
-            bicycleList.add(new BicycleDTO(
-                    bicycle.getBicycleNo(),
-                    bicycle.getBrand(),
-                    bicycle.getBicycleType(),
-                    bicycle.getColour(),
-                    bicycle.getStatus()
-
-            ));
-        }
+        List<BicycleDTO> bicycleList = bicycleBO.getAllBicycles();
 
         for (BicycleDTO bicycle : bicycleList) {
             obList.add(new BicycleTM(
@@ -92,17 +84,7 @@ public class BicycleManageFormController implements Initializable {
     public void bicycleNoSearchOnAction(ActionEvent actionEvent) throws SQLException {
         try {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
-            List<BicycleDTO> bicycleList = new ArrayList<>();
-            for (Bicycle bicycle:bicycleDAO.search(bicycleNoTxt.getText())) {
-                bicycleList.add(new BicycleDTO(
-                        bicycle.getBicycleNo(),
-                        bicycle.getBrand(),
-                        bicycle.getBicycleType(),
-                        bicycle.getColour(),
-                        bicycle.getStatus()
-
-                ));
-            }
+            List<BicycleDTO> bicycleList = bicycleBO.searchBicycles(bicycleNoTxt.getText());
             if (!bicycleList.isEmpty()){
                 for (BicycleDTO bike : bicycleList) {
                     bicycleNoTxt.setText(bike.getBicycleNo());
@@ -128,7 +110,7 @@ public class BicycleManageFormController implements Initializable {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
             boolean isAffected=false;
             if (isCorrectPattern()){
-                isAffected = bicycleDAO.save(new Bicycle(bicycleDAO.newIdGenerate(),String.valueOf(bicycleTypeCmbBx.getSelectionModel().getSelectedItem()),
+                isAffected = bicycleBO.saveBicycles(new BicycleDTO(bicycleBO.newIdGenerate(),String.valueOf(bicycleTypeCmbBx.getSelectionModel().getSelectedItem()),
                         colourTxt.getText(),brandTxt.getText(),"Available"));
             }
             if (isAffected) {
@@ -151,7 +133,7 @@ public class BicycleManageFormController implements Initializable {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
             boolean isAffected=false;
             if (isCorrectPattern()){
-                isAffected = bicycleDAO.update(new Bicycle(bicycleNoTxt.getText(),String.valueOf(bicycleTypeCmbBx.getSelectionModel().getSelectedItem()),
+                isAffected = bicycleBO.updateBicycles(new BicycleDTO(bicycleNoTxt.getText(),String.valueOf(bicycleTypeCmbBx.getSelectionModel().getSelectedItem()),
                         colourTxt.getText(),brandTxt.getText(),""));
             }
             if (isAffected) {
@@ -177,7 +159,7 @@ public class BicycleManageFormController implements Initializable {
             if (comfirm.isPresent()){
                 boolean isAffected=false;
                 if (isCorrectPattern()){
-                    isAffected = bicycleDAO.delete(bicycleNoTxt.getText());
+                    isAffected = bicycleBO.deleteBicycle(bicycleNoTxt.getText());
                 }
                 if (isAffected) {
                     new Alert(Alert.AlertType.INFORMATION, "Bicycle Removed Successfully!").showAndWait();

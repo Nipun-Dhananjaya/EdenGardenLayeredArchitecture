@@ -1,12 +1,11 @@
 package com.edengardensigiriya.edengarden.controller;
 
-import com.edengardensigiriya.edengarden.dao.DAOFactory;
-import com.edengardensigiriya.edengarden.dao.custom.CarDAO;
+import com.edengardensigiriya.edengarden.bo.BOFactory;
+import com.edengardensigiriya.edengarden.bo.custom.CarBO;
 import com.edengardensigiriya.edengarden.db.DBConnection;
 import com.edengardensigiriya.edengarden.dto.CarDTO;
 import com.edengardensigiriya.edengarden.util.RegExPatterns;
 import com.edengardensigiriya.edengarden.dto.tm.CarTM;
-import com.edengardensigiriya.edengarden.entity.Car;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -35,7 +34,7 @@ public class CarManageFormController {
     public TableColumn columnCarType;
     public TableColumn columnColor;
     public TableColumn columnStatus;
-    CarDAO carDAO= (CarDAO) DAOFactory.getDaoFactory().getDAO(DAOFactory.DAOTypes.CAR);
+    CarBO carBo= (CarBO) BOFactory.getBoFactory().getBO(BOFactory.BOTypes.CAR);
 
     public void initialize() throws SQLException, ClassNotFoundException {
         carTypes.add("SUV");
@@ -56,17 +55,7 @@ public class CarManageFormController {
     }
     private void getAllCars() throws SQLException, ClassNotFoundException {
         ObservableList<CarTM> obList = FXCollections.observableArrayList();
-        List<CarDTO> carList = new ArrayList<>();
-        for (Car car:carDAO.getAll()) {
-            carList.add(new CarDTO(
-                    car.getRegNo(),
-                    car.getBrand(),
-                    car.getCarType(),
-                    car.getColour(),
-                    car.getStatus()
-            ));
-        }
-
+        List<CarDTO> carList = carBo.getAllCars();
         for (CarDTO car : carList) {
             obList.add(new CarTM(
                     car.getRegNo(),
@@ -88,16 +77,7 @@ public class CarManageFormController {
     public void regNoSearchOnAction(ActionEvent actionEvent) throws SQLException {
         try {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
-            List<CarDTO> carList = new ArrayList<>();
-            for (Car car:carDAO.search(regNoTxt.getText())) {
-                carList.add(new CarDTO(
-                        car.getRegNo(),
-                        car.getBrand(),
-                        car.getCarType(),
-                        car.getColour(),
-                        car.getStatus()
-                ));
-            }
+            List<CarDTO> carList = carBo.searchCars(regNoTxt.getText());
             if (!carList.isEmpty()){
                 for (CarDTO car : carList) {
                     regNoTxt.setText(car.getRegNo());
@@ -123,9 +103,8 @@ public class CarManageFormController {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
             boolean isAffected=false;
             if (isCorrectPattern()){
-                isAffected = carDAO.save(new Car(regNoTxt.getText(), String.valueOf(carTypeCmbBx.getSelectionModel().getSelectedItem()),
+                isAffected = carBo.saveCars(new CarDTO(regNoTxt.getText(), String.valueOf(carTypeCmbBx.getSelectionModel().getSelectedItem()),
                         colourTxt.getText(), brandTxt.getText(),"Available"));
-                System.out.println("Ran");
             }
             if (isAffected) {
                 new Alert(Alert.AlertType.INFORMATION, "Car Added Successfully!").showAndWait();
@@ -147,7 +126,7 @@ public class CarManageFormController {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
             boolean isAffected=false;
             if (isCorrectPattern()){
-                isAffected = carDAO.update(new Car(regNoTxt.getText(),String.valueOf(carTypeCmbBx.getSelectionModel().getSelectedItem()),
+                isAffected = carBo.updateCars(new CarDTO(regNoTxt.getText(),String.valueOf(carTypeCmbBx.getSelectionModel().getSelectedItem()),
                         colourTxt.getText(),brandTxt.getText(),""));
             }
             if (isAffected) {
@@ -173,7 +152,7 @@ public class CarManageFormController {
             if (comfirm.isPresent()){
                 boolean isAffected=false;
                 if (isCorrectPattern()){
-                    isAffected = carDAO.delete(regNoTxt.getText());
+                    isAffected = carBo.deleteCar(regNoTxt.getText());
                 }
                 if (isAffected) {
                     new Alert(Alert.AlertType.INFORMATION, "Car Removed Successfully!").showAndWait();

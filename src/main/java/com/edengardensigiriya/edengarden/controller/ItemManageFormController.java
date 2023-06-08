@@ -1,5 +1,7 @@
 package com.edengardensigiriya.edengarden.controller;
 
+import com.edengardensigiriya.edengarden.bo.BOFactory;
+import com.edengardensigiriya.edengarden.bo.custom.ItemBO;
 import com.edengardensigiriya.edengarden.dao.DAOFactory;
 import com.edengardensigiriya.edengarden.dao.custom.ItemDAO;
 import com.edengardensigiriya.edengarden.db.DBConnection;
@@ -28,7 +30,7 @@ public class ItemManageFormController {
     public Button updateBtn;
     public Button removeBtn;
     public TableView itmTbl;
-    ItemDAO itemDAO= (ItemDAO) DAOFactory.getDaoFactory().getDAO(DAOFactory.DAOTypes.ITEM);
+    ItemBO itemBO= (ItemBO) BOFactory.getBoFactory().getBO(BOFactory.BOTypes.ITEM);
 
     public void initialize() throws SQLException, ClassNotFoundException {
         setCellValueFactory();
@@ -36,13 +38,7 @@ public class ItemManageFormController {
     }
     private void getAllItems() throws SQLException, ClassNotFoundException {
         ObservableList<ItemTM> obList = FXCollections.observableArrayList();
-        List<ItemDTO> itmList = new ArrayList<>();
-        for (Item itm : itemDAO.getAll()) {
-            itmList.add(new ItemDTO(
-                    itm.getItemCode(),
-                    itm.getItemDescription()
-            ));
-        }
+        List<ItemDTO> itmList = itemBO.getAllItems();
 
         for (ItemDTO itm : itmList) {
             obList.add(new ItemTM(
@@ -59,13 +55,8 @@ public class ItemManageFormController {
     public void idSearchOnAction(ActionEvent actionEvent) throws SQLException {
         try {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
-            List<ItemDTO> itemList = new ArrayList<>();
-            for (Item itm : itemDAO.search(idTxt.getText())) {
-                itemList.add(new ItemDTO(
-                        itm.getItemCode(),
-                        itm.getItemDescription()
-                ));
-            }
+            List<ItemDTO> itemList =  itemBO.searchItems(idTxt.getText());
+
             if (!itemList.isEmpty()){
                 for (ItemDTO item : itemList) {
                     idTxt.setText(item.getItemCode());
@@ -87,7 +78,7 @@ public class ItemManageFormController {
     public void addItemOnAction(ActionEvent actionEvent) throws SQLException {
         try {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
-            boolean isAdded = itemDAO.save(new Item(itemDAO.newIdGenerate(), nameTxt.getText()));
+            boolean isAdded = itemBO.saveItems(new ItemDTO(itemBO.newIdGenerate(), nameTxt.getText()));
             if (isAdded) {
                 new Alert(Alert.AlertType.INFORMATION, "Item Added Successfully!").showAndWait();
                 DBConnection.getInstance().getConnection().commit();
@@ -106,7 +97,7 @@ public class ItemManageFormController {
     public void updateItemOnAction(ActionEvent actionEvent) throws SQLException {
         try {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
-            boolean isAdded = itemDAO.update(new Item(idTxt.getText(), nameTxt.getText()));
+            boolean isAdded = itemBO.updateItems(new ItemDTO(idTxt.getText(), nameTxt.getText()));
             if (isAdded) {
                 new Alert(Alert.AlertType.INFORMATION, "Item Updated Successfully!").showAndWait();
                 DBConnection.getInstance().getConnection().commit();
@@ -128,7 +119,7 @@ public class ItemManageFormController {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
             Optional<ButtonType> comfirm=new Alert(Alert.AlertType.CONFIRMATION, "Do you want to remove the room?").showAndWait();
             if (comfirm.isPresent()){
-                boolean isAdded = itemDAO.delete(idTxt.getText());
+                boolean isAdded = itemBO.removeItems(idTxt.getText());
                 if (isAdded) {
                     new Alert(Alert.AlertType.INFORMATION, "Item Removed Successfully!").showAndWait();
                     DBConnection.getInstance().getConnection().commit();

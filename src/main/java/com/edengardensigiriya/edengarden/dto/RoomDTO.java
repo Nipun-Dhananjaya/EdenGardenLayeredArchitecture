@@ -15,4 +15,11 @@ public class RoomDTO {
     private String sleepCount;
     private String costPerDay;
     private String availability;
+
+    public RoomDTO(String roomNo, String roomType, String sleepCount, String costPerDay) {
+        this.roomNo=roomNo;
+        this.roomType=roomType;
+        this.sleepCount=sleepCount;
+        this.costPerDay=costPerDay;
+    }
 }
