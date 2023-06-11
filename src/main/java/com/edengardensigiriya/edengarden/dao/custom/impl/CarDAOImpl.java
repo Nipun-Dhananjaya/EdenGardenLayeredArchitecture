@@ -86,6 +86,7 @@ public class CarDAOImpl implements CarDAO {
                     resultSet.getString(4),
                     resultSet.getString(5)
             ));
+            System.out.println(resultSet.getString(2));
         }
         return data;
     }

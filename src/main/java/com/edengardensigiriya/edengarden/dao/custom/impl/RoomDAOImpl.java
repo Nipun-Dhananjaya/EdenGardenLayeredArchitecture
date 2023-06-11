@@ -73,8 +73,8 @@ public class RoomDAOImpl implements RoomDAO {
     }
 
     @Override
-    public List<Room> search(String s) throws SQLException, ClassNotFoundException {
-        ResultSet resultSet=CrudUtil.execute("SELECT * FROM room;");
+    public List<Room> search(String roomNo) throws SQLException, ClassNotFoundException {
+        ResultSet resultSet=CrudUtil.execute("SELECT * FROM room WHERE room_No=?;",roomNo);
         List<Room> data = new ArrayList<>();
 
         while (resultSet.next()) {

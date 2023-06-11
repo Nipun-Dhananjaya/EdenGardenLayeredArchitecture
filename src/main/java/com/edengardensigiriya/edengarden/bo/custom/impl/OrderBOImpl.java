@@ -81,6 +81,7 @@ public class OrderBOImpl implements OrderBO {
                     orderItem.getQty()
             ));
         }
+        System.out.println(items.get(0).getItemDescription());
         return orderDAO.update(new Custom(orderDTO.getOrdId(),orderDTO.getSuppId(),items,orderDTO.getDeliverDateTime(),orderDTO.getCost()));
     }
 

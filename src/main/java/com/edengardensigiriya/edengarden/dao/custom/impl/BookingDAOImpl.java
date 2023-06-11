@@ -39,9 +39,9 @@ public class BookingDAOImpl implements BookingDAO {
 
     @Override
     public boolean save(Custom dto) throws SQLException, ClassNotFoundException {
-        boolean isAffectedToPayment = CrudUtil.execute("INSERT INTO payment VALUES(?,?,?,?,?);", dto.getPaymentId(), Double.parseDouble(dto.getPayment()), LocalDateTime.now(),"Room Booking","Paid");
+        boolean isAffectedToPayment = CrudUtil.execute("INSERT INTO payment VALUES(?,?,?,?,?);", dto.getPaymentId(), Double.parseDouble(dto.getRoomBookingCost()), LocalDateTime.now(),"Room Booking","Paid");
         boolean isAffectedToBooking = CrudUtil.execute("INSERT INTO booking VALUES(?,?,?,?,?);", dto.getBookingId(), dto.getBookFrom(), String.valueOf(dto.getDuration()), dto.getPaymentId(),dto.getCustId());
-        boolean isAffectedToRoomBooking = CrudUtil.execute("INSERT INTO room_booking VALUES(?,?,?,?);", dto.getRoomNo(), dto.getBookingId(), LocalDateTime.now(),dto.getAvailability());
+        boolean isAffectedToRoomBooking = CrudUtil.execute("INSERT INTO room_booking VALUES(?,?,?,?);", dto.getRoomNo(), dto.getBookingId(), LocalDateTime.now(),dto.getRoomAvailability());
         boolean isAffectedToRoom = CrudUtil.execute("UPDATE room SET status=? WHERE room_No=?;","Booked" ,dto.getRoomNo());
 
         return (isAffectedToBooking &isAffectedToRoomBooking & isAffectedToPayment & isAffectedToRoom) ? true:false;
@@ -49,9 +49,9 @@ public class BookingDAOImpl implements BookingDAO {
 
     @Override
     public boolean update(Custom dto) throws SQLException, ClassNotFoundException {
-        boolean isAffectedToPayment = CrudUtil.execute("UPDATE payment SET paid_amount=?,status=? WHERE pay_id=?;",  Double.parseDouble(dto.getPayment()), dto.getPaymentStatus(),dto.getPaymentId());
+        boolean isAffectedToPayment = CrudUtil.execute("UPDATE payment SET paid_amount=?,status=? WHERE pay_id=?;",  Double.parseDouble(dto.getRoomBookingCost()), dto.getPaymentStatus(),dto.getPaymentId());
         boolean isAffectedToBooking = CrudUtil.execute("UPDATE booking SET booked_date_time=?,booking_duration=? WHERE booking_id=?;", dto.getBookFrom(), String.valueOf(dto.getDuration()),dto.getBookingId());
-        boolean isAffectedToRoomBooking = CrudUtil.execute("UPDATE room_booking SET availability=? WHERE room_No=? AND booking_id=?;",dto.getAvailability(), dto.getRoomNo(), dto.getBookingId());
+        boolean isAffectedToRoomBooking = CrudUtil.execute("UPDATE room_booking SET availability=? WHERE room_No=? AND booking_id=?;",dto.getRoomAvailability(), dto.getRoomNo(), dto.getBookingId());
 
         return (isAffectedToBooking &isAffectedToRoomBooking & isAffectedToPayment) ? true:false;
     }
@@ -280,6 +280,16 @@ public class BookingDAOImpl implements BookingDAO {
             boolean isAffected=false;
             for (int i = 0; i < tempIds.size(); i++) {
                 isAffected=CrudUtil.execute("UPDATE room_booking SET availability=? WHERE booking_id=?;","End",tempIds.get(i));
+            }
+            ResultSet roomSet=CrudUtil.execute("SELECT room_booking.room_No FROM room_booking INNER JOIN booking ON room_booking.booking_id=booking.booking_id WHERE booking.booked_date_time<?;",LocalDateTime.now());
+            ArrayList<String> tempNos=new ArrayList<>();
+            while (roomSet.next()){
+                tempNos.add(roomSet.getString(1));
+                System.out.println(roomSet.getString(1));
+            }
+            boolean isRoomAffected=false;
+            for (int i = 0; i < tempNos.size(); i++) {
+                isRoomAffected=CrudUtil.execute("UPDATE room SET status=? WHERE room_No=?;","Available",tempNos.get(i));
             }
             DBConnection.getInstance().getConnection().commit();
         } catch (SQLException e) {

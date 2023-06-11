@@ -42,6 +42,7 @@ public class RoomManageFormController {
 
 
     public void initialize() throws SQLException, ClassNotFoundException {
+        roomTypes.clear();
         roomTypes.add("Deluxe Room");
         roomTypes.add("Standard Room");
         ObservableList<String> roomType = FXCollections.observableList(roomTypes);

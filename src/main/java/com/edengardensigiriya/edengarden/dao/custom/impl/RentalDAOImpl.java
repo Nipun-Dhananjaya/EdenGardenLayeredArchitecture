@@ -22,7 +22,7 @@ public class RentalDAOImpl implements RentalDAO {
         boolean isAddedVehicleRental = false;
         boolean isAddedVehicle = false;
         try {
-            boolean isAddedPayment = CrudUtil.execute("INSERT INTO payment VALUES(?,?,?,?,?);", entity.getPaymentId(), Double.parseDouble(entity.getPayment()), LocalDateTime.now(), "Rental","Paid");
+            boolean isAddedPayment = CrudUtil.execute("INSERT INTO payment VALUES(?,?,?,?,?);", entity.getPaymentId(), Double.parseDouble(entity.getRentCost()), LocalDateTime.now(), "Rental","Paid");
             boolean isAddedRental = CrudUtil.execute("INSERT INTO rental VALUES (?,?,?,?,?,?);", entity.getRentId(), entity.getRentFrom(), String.valueOf(entity.getDuration()), entity.getPaymentId(), entity.getCustId(),"Active");
             if (entity.getVehicleType().equals("Car")) {
                 isAddedVehicleRental = CrudUtil.execute("INSERT INTO car_rental VALUES (?,?,?);", entity.getVehicleId(), entity.getRentId(), LocalDateTime.now());

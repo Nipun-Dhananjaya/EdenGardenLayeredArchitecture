@@ -94,7 +94,7 @@ public class BicycleManageFormController implements Initializable {
                     bicycleNoTxt.setDisable(true);
                 }
             }else{
-                new Alert(Alert.AlertType.WARNING, "BicycleDTO Not Found!").showAndWait();
+                new Alert(Alert.AlertType.WARNING, "Bicycle Not Found!").showAndWait();
             }
             DBConnection.getInstance().getConnection().commit();
         } catch (SQLException | ClassNotFoundException e) {
@@ -110,11 +110,11 @@ public class BicycleManageFormController implements Initializable {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
             boolean isAffected=false;
             if (isCorrectPattern()){
-                isAffected = bicycleBO.saveBicycles(new BicycleDTO(bicycleBO.newIdGenerate(),String.valueOf(bicycleTypeCmbBx.getSelectionModel().getSelectedItem()),
-                        colourTxt.getText(),brandTxt.getText(),"Available"));
+                isAffected = bicycleBO.saveBicycles(new BicycleDTO(bicycleBO.newIdGenerate(),brandTxt.getText(),String.valueOf(bicycleTypeCmbBx.getSelectionModel().getSelectedItem()),
+                        colourTxt.getText(),"Available"));
             }
             if (isAffected) {
-                new Alert(Alert.AlertType.INFORMATION, "BicycleDTO Added Successfully!").showAndWait();
+                new Alert(Alert.AlertType.INFORMATION, "Bicycle Added Successfully!").showAndWait();
                 resetPage();
             } else {
                 new Alert(Alert.AlertType.WARNING, "Re-Check Submitted Details!").showAndWait();
@@ -133,8 +133,8 @@ public class BicycleManageFormController implements Initializable {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
             boolean isAffected=false;
             if (isCorrectPattern()){
-                isAffected = bicycleBO.updateBicycles(new BicycleDTO(bicycleNoTxt.getText(),String.valueOf(bicycleTypeCmbBx.getSelectionModel().getSelectedItem()),
-                        colourTxt.getText(),brandTxt.getText(),""));
+                isAffected = bicycleBO.updateBicycles(new BicycleDTO(bicycleNoTxt.getText(),brandTxt.getText(),String.valueOf(bicycleTypeCmbBx.getSelectionModel().getSelectedItem()),
+                        colourTxt.getText(),""));
             }
             if (isAffected) {
                 new Alert(Alert.AlertType.INFORMATION, "Bicycle Updated Successfully!").showAndWait();

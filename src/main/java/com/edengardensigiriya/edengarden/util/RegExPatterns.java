@@ -3,7 +3,7 @@ package com.edengardensigiriya.edengarden.util;
 import java.util.regex.Pattern;
 
 public class RegExPatterns {
-    private static final Pattern namePattern = Pattern.compile("^[a-zA-Z '.-]{4,}$");//^[A-Z][a-zA-z ]{1,29}$
+    private static final Pattern namePattern = Pattern.compile("^[a-zA-Z '.-]{3,}$");//^[A-Z][a-zA-z ]{1,29}$
     private static final Pattern idPattern = Pattern.compile("^([0-9]{9}[x|X|v|V]|[0-9]{12})$");
     private static final Pattern registrationIdPattern = Pattern.compile("^[I][T][0-1]{1,}$");
     private static final Pattern emailPattern = Pattern.compile("(^[a-zA-Z0-9_.-]+)@([a-zA-Z]+)([\\.])([a-zA-Z]+)$");

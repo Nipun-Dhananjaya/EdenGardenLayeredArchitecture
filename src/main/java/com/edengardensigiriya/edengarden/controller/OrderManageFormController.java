@@ -219,9 +219,11 @@ public class OrderManageFormController {
             LocalDateTime deliverDate = LocalDateTime.of(deliverDateDtPckr.getValue(), LocalTime.parse(deliverTimeTxt.getText()));
             boolean isAffected=false;
             if (isCorrectPattern()){
+                System.out.println("ran");
                 isAffected = orderBO.updateOrders(new OrderDTO(bookingIdTxt.getText(),suppIdTxt.getText(),data,String.valueOf(deliverDate),costTxt.getText()));
             }
             if (isAffected) {
+                System.out.println("Affected");
                 new Alert(Alert.AlertType.INFORMATION, "Order Updated!").showAndWait();
                 DBConnection.getInstance().getConnection().commit();
                 sendMail("Update");

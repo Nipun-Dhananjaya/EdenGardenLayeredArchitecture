@@ -11,18 +11,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PaymentDAOImpl implements PaymentDAO {
+
     @Override
-    public List<Payment> getAll() throws SQLException, ClassNotFoundException {
+    public List<Custom> getAll() throws SQLException, ClassNotFoundException {
         return null;
     }
 
     @Override
-    public boolean save(Payment dto) throws SQLException, ClassNotFoundException {
+    public boolean save(Custom entity) throws SQLException, ClassNotFoundException {
         return false;
     }
 
     @Override
-    public boolean update(Payment dto) throws SQLException, ClassNotFoundException {
+    public boolean update(Custom entity) throws SQLException, ClassNotFoundException {
         return false;
     }
 
@@ -32,7 +33,7 @@ public class PaymentDAOImpl implements PaymentDAO {
     }
 
     @Override
-    public List<Payment> search(String s) throws SQLException, ClassNotFoundException {
+    public List<Custom> search(String s) throws SQLException, ClassNotFoundException {
         return null;
     }
 

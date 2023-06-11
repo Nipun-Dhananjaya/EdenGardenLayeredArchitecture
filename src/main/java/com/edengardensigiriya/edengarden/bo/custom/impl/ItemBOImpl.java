@@ -33,8 +33,9 @@ public class ItemBOImpl implements ItemBO {
                     itm.getItemCode(),
                     itm.getItemDescription()
             ));
+            System.out.println("Item");
         }
-        return null;
+        return itemList;
     }
 
     @Override

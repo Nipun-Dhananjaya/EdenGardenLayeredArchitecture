@@ -62,7 +62,10 @@ public class BookingBOImpl implements BookingBO {
 
     @Override
     public boolean updateBookings(BookingDTO bookingDTO) throws SQLException, ClassNotFoundException {
-        return bookingDAO.update(new Custom(bookingDTO.getBookingId(), bookingDTO.getBookFrom(), bookingDTO.getDuration(), bookingDTO.getPaymentId(),bookingDTO.getRoomNo(), bookingDTO.getCost(),bookingDTO.getAvailability(),bookingDTO.getPaymentStatus(),0));
+        System.out.println(bookingDTO.getCost());
+        Custom custom=new Custom(bookingDTO.getBookingId(), bookingDTO.getBookFrom(), bookingDTO.getDuration(), bookingDTO.getPaymentId(),bookingDTO.getRoomNo(), bookingDTO.getCost(),bookingDTO.getAvailability(),bookingDTO.getPaymentStatus(),0);
+        System.out.println("C:"+ custom.getRoomBookingCost());
+        return bookingDAO.update(custom);
     }
 
     @Override

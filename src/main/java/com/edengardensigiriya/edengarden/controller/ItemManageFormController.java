@@ -117,7 +117,7 @@ public class ItemManageFormController {
     public void removeItemOnAction(ActionEvent actionEvent) throws SQLException {
         try {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
-            Optional<ButtonType> comfirm=new Alert(Alert.AlertType.CONFIRMATION, "Do you want to remove the room?").showAndWait();
+            Optional<ButtonType> comfirm=new Alert(Alert.AlertType.CONFIRMATION, "Do you want to remove the item?").showAndWait();
             if (comfirm.isPresent()){
                 boolean isAdded = itemBO.removeItems(idTxt.getText());
                 if (isAdded) {

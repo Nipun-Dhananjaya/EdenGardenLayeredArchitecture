@@ -184,6 +184,7 @@ public class CustomerManageFormController{
                 isAffected = customer.updateCustomer(new CustomerDTO(idTxt.getText(),
                         nameTxt.getText(), nicTxt.getText(), addressTxt.getText(), emailTxt.getText(), String.join(" , ", CustomerDAO.contact),
                         maleRdBtn.isSelected() ? "MALE" : "FEMALE"));
+                System.out.println(isCorrectPattern());
             }
             if (isAffected) {
                 new Alert(Alert.AlertType.INFORMATION, "Customer Updated!").showAndWait();

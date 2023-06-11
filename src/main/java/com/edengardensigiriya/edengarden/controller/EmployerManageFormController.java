@@ -150,7 +150,7 @@ public class EmployerManageFormController {
             if (isCorrectPattern()){
                 isAffected= employerBO.saveEmployer(new EmployerDTO(employerBO.newIdGenerate(), nameTxt.getText(), nicTxt.getText(),
                         addressTxt.getText(), emailTxt.getText(), String.join(" , ", EmployerDAO.contact),String.valueOf(dobDtPck.getValue()),
-                        maleRdBtn.isSelected() ? "MALE" : "FEMALE", jobRolTxt.getText(),empSalary.getText(),String.valueOf(strtDtDtPck.getValue()),String.valueOf(endDtPkr.getValue())));
+                        maleRdBtn.isSelected() ? "MALE" : "FEMALE", jobRolTxt.getText(),empSalary.getText(),String.valueOf(strtDtDtPck.getValue()),endDtPkr.getValue()!=null?String.valueOf(endDtPkr.getValue()):null));
             }
             if (isAffected) {
                 new Alert(Alert.AlertType.INFORMATION, "Employer Added!").showAndWait();
@@ -175,7 +175,7 @@ public class EmployerManageFormController {
             if (isCorrectPattern()){
                 isAffected= employerBO.updateEmployer(new EmployerDTO(idTxt.getText(), nameTxt.getText(), nicTxt.getText(),
                         addressTxt.getText(), emailTxt.getText(), String.join(" , ", EmployerDAO.contact),String.valueOf(dobDtPck.getValue()),
-                        maleRdBtn.isSelected() ? "MALE" : "FEMALE", jobRolTxt.getText(),empSalary.getText(),String.valueOf(strtDtDtPck.getValue()),String.valueOf(endDtPkr.getValue())));
+                        maleRdBtn.isSelected() ? "MALE" : "FEMALE", jobRolTxt.getText(),empSalary.getText(),String.valueOf(strtDtDtPck.getValue()),endDtPkr.getValue()!=null?String.valueOf(endDtPkr.getValue()):null));
             }
             if (isAffected) {
                 new Alert(Alert.AlertType.INFORMATION, "Employer Updated!").showAndWait();

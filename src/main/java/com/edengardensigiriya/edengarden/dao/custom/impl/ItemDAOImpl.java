@@ -78,6 +78,7 @@ public class ItemDAOImpl implements ItemDAO {
                     resultSet.getString(1),
                     resultSet.getString(2)
             ));
+            System.out.println(resultSet.getString(1));
         }
         return data;
     }

@@ -46,7 +46,18 @@ public class CustomerDAOImpl implements CustomerDAO {
 
     @Override
     public boolean update(Customer dto) throws SQLException, ClassNotFoundException {
-        return false;
+        try {
+            boolean isAffected =CrudUtil.execute("UPDATE customer SET cust_name=?,cust_nic=?,cust_address=?,cust_email=?," +
+                    "cust_contact=?,gender=? WHERE cust_id=?;", dto.getCustName(), dto.getCustNic(), dto.getCustAddress(), dto.getCustEmail(), dto.getCustContact(), dto.getCustGender(), dto.getCustId());
+            if (isAffected){
+                return true;
+            }else{
+                return false;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     @Override

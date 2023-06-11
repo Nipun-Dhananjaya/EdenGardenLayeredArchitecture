@@ -73,7 +73,7 @@ public class RentalManageFormController {
     RentalBO rentalBO= (RentalBO) BOFactory.getBoFactory().getBO(BOFactory.BOTypes.RENTAL);
 
     public void initialize() throws SQLException, ClassNotFoundException {
-        vehicleType.add("BicycleDTO");
+        vehicleType.add("Bicycle");
         vehicleType.add("Car");
         ObservableList<String> Type = FXCollections.observableList(vehicleType);
         vehicleCmbBx.setItems(Type);

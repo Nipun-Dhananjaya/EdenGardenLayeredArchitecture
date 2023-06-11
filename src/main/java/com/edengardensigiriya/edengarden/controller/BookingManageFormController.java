@@ -229,6 +229,7 @@ public class BookingManageFormController  {
             LocalDateTime paidDateTime = bookingBO.getPaidDateTime(bookingId);
             boolean isAffected=false;
             if (isCorrectPattern()){
+                System.out.println(costTxt.getText());
                 isAffected=bookingBO.updateBookings(new BookingDTO(bookingId, String.valueOf(startDate), String.valueOf(duration), paymentId,String.valueOf(roomNumCmbBx.getValue()), String.valueOf(costTxt.getText()),"Active","Paid"));
             }
             if (isAffected) {

@@ -71,6 +71,7 @@ public class OrderDAOImpl implements OrderDAO {
             String itmCode = null;
             boolean isUpdatedOrd=CrudUtil.execute("UPDATE order_ SET supp_id=?,ord_dilever_date=? WHERE ord_id=?;",entity.getSuppId(),entity.getDeliverDateTime(),entity.getOrdId());
             boolean isUpdatedPurchDetls=false;
+            System.out.println("Ord:"+isUpdatedOrd);
             for (int j = 0; j < length; j++) {
                 OrderItemDTO itm= new OrderItemDTO();
                 itm.setItem(entity.getOrderItem().get(j).getItemDescription());
@@ -81,6 +82,12 @@ public class OrderDAOImpl implements OrderDAO {
                 }
                 System.out.println(itmCode);
                 isUpdatedPurchDetls = CrudUtil.execute("UPDATE purchase_detail SET bought_qty=?,ord_cost=? WHERE order_id=? AND itm_code=?;",Double.parseDouble(String.valueOf(itm.getQty())),entity.getOrdCost()!=null? Double.parseDouble(String.valueOf(entity.getOrdCost())):0.00, entity.getOrdId(),itmCode);
+                if (isUpdatedPurchDetls){
+                    continue;
+                }else{
+                    isUpdatedPurchDetls = CrudUtil.execute("INSERT INTO purchase_detail VALUES(?,?,?,?);", entity.getOrdId(),itmCode,Double.parseDouble(String.valueOf(itm.getQty())),entity.getOrdCost()!=null? Double.parseDouble(String.valueOf(entity.getOrdCost())):0.00);
+                }
+                System.out.println("Pur"+isUpdatedPurchDetls);
             }
             if (isUpdatedOrd & isUpdatedPurchDetls){
                 return true;

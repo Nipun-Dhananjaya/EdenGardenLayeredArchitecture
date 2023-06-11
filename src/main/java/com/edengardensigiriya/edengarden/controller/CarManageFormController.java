@@ -103,8 +103,10 @@ public class CarManageFormController {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
             boolean isAffected=false;
             if (isCorrectPattern()){
-                isAffected = carBo.saveCars(new CarDTO(regNoTxt.getText(), String.valueOf(carTypeCmbBx.getSelectionModel().getSelectedItem()),
-                        colourTxt.getText(), brandTxt.getText(),"Available"));
+                System.out.println("in");
+                isAffected = carBo.saveCars(new CarDTO(regNoTxt.getText(),brandTxt.getText(), String.valueOf(carTypeCmbBx.getSelectionModel().getSelectedItem()),
+                        colourTxt.getText(), "Available"));
+                System.out.println(isAffected);
             }
             if (isAffected) {
                 new Alert(Alert.AlertType.INFORMATION, "Car Added Successfully!").showAndWait();
@@ -126,8 +128,8 @@ public class CarManageFormController {
             DBConnection.getInstance().getConnection().setAutoCommit(false);
             boolean isAffected=false;
             if (isCorrectPattern()){
-                isAffected = carBo.updateCars(new CarDTO(regNoTxt.getText(),String.valueOf(carTypeCmbBx.getSelectionModel().getSelectedItem()),
-                        colourTxt.getText(),brandTxt.getText(),""));
+                isAffected = carBo.updateCars(new CarDTO(regNoTxt.getText(),brandTxt.getText(),String.valueOf(carTypeCmbBx.getSelectionModel().getSelectedItem()),
+                        colourTxt.getText(),""));
             }
             if (isAffected) {
                 new Alert(Alert.AlertType.INFORMATION, "Car Updated Successfully!").showAndWait();
@@ -179,6 +181,8 @@ public class CarManageFormController {
         getAllCars();
     }
     private boolean isCorrectPattern(){
+        System.out.println(RegExPatterns.getNamePattern().matcher(colourTxt.getText()).matches());
+        System.out.println("2nd:"+RegExPatterns.getNamePattern().matcher(brandTxt.getText()).matches());
         if (RegExPatterns.getNamePattern().matcher(colourTxt.getText()).matches() && RegExPatterns.getNamePattern().matcher(brandTxt.getText()).matches()){
             return true;
         }
