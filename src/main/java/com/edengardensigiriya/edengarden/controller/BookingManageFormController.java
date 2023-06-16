@@ -2,15 +2,11 @@ package com.edengardensigiriya.edengarden.controller;
 
 import com.edengardensigiriya.edengarden.bo.BOFactory;
 import com.edengardensigiriya.edengarden.bo.custom.BookingBO;
-import com.edengardensigiriya.edengarden.dao.DAOFactory;
 import com.edengardensigiriya.edengarden.dao.custom.BookingDAO;
-import com.edengardensigiriya.edengarden.dao.custom.PaymentDAO;
 import com.edengardensigiriya.edengarden.db.DBConnection;
 import com.edengardensigiriya.edengarden.dto.*;
 import com.edengardensigiriya.edengarden.dto.tm.BookingTM;
-import com.edengardensigiriya.edengarden.entity.Custom;
 import com.edengardensigiriya.edengarden.util.RegExPatterns;
-import com.edengardensigiriya.edengarden.util.SendEmail;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -175,7 +171,6 @@ public class BookingManageFormController  {
             if (isAffected) {
                 new Alert(Alert.AlertType.INFORMATION, "Booking Successful!").showAndWait();
                 DBConnection.getInstance().getConnection().commit();
-                sendMail("Booking");
                 resetPage();
             } else {
                 new Alert(Alert.AlertType.WARNING, "Re-Check Submitted Details!").showAndWait();
@@ -203,7 +198,6 @@ public class BookingManageFormController  {
                 if (isAffected) {
                     new Alert(Alert.AlertType.INFORMATION, "Booking Cancelled!").showAndWait();
                     DBConnection.getInstance().getConnection().commit();
-                    sendMail("Cancel");
                     resetPage();
                 } else {
                     new Alert(Alert.AlertType.WARNING, "Something went wrong!").showAndWait();
@@ -235,7 +229,6 @@ public class BookingManageFormController  {
             if (isAffected) {
                 new Alert(Alert.AlertType.INFORMATION, "Booking Updated!").showAndWait();
                 DBConnection.getInstance().getConnection().commit();
-                sendMail("Update");
                 bookingIdTxt.setDisable(false);
                 custIdTxt.setDisable(false);
                 resetPage();
@@ -261,6 +254,8 @@ public class BookingManageFormController  {
         roomTypeCmbBx.setValue("Room Type");
         setCellValueFactory();
         getAllBookings();
+        bookingIdTxt.setDisable(false);
+        custIdTxt.setDisable(false);
     }
 
     public void setSelectedRoomTypeNoOnAction(ActionEvent actionEvent) {
@@ -286,11 +281,11 @@ public class BookingManageFormController  {
         }
         return false;
     }
-    public void sendMail(String status) throws MessagingException, GeneralSecurityException, IOException, SQLException {
+    /*public void sendMail(String status) throws MessagingException, GeneralSecurityException, IOException, SQLException {
         SendEmail.sendMail(bookingBO.getEmail(custIdTxt.getText()),
                 (status.equals("Booking")?"Room Booking":status.equals("Update")?"Room Booking Update":"Room Booking Cancellation"),
                 "Dear Customer,\nYour Booking ID:"+(status.equals("Booking")?bookingBO.getBookingId():status.equals("Update")?bookingIdTxt.getText():bookingIdTxt.getText())+"\nYour Customer ID:"+custIdTxt.getText()+"\nName:"+nameTxt.getText()+
                 "\nRoom Number:"+ roomNumCmbBx.getSelectionModel().getSelectedItem()+"\nFrom:"+startDateDtPckr.getValue()+"  "+startTimeTxt.getText()+"\nTo:"+endDateDtPckr.getValue()+"  "+endTimeTxt.getText()+"\nTotal Cost:"+ costTxt.getText()+
                 "\n"+(status.equals("Booking")?"Room Booking Successful!":status.equals("Update")?"Room Booking Update Successfully":"Room Booking Cancelled!"+"\n\nThank you for using our service!\n\nHotel Eden Garden,\nInamaluwa,\nSeegiriya"));
-    }
+    }*/
 }

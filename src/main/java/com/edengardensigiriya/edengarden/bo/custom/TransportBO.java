@@ -29,7 +29,5 @@ public interface TransportBO extends SuperBO {
 
     boolean cancelTransports(TransportDTO transportDTO) throws SQLException;
 
-    String getEmail(String custId) throws SQLException;
-
     String getBookingId();
 }

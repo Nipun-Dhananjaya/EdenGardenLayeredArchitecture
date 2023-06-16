@@ -35,7 +35,5 @@ public interface BookingBO extends SuperBO {
 
     String setSleepCount(String roomNo);
 
-    String getEmail(String custId) throws SQLException;
-
     String getBookingId();
 }

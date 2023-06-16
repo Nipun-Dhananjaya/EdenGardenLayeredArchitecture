@@ -30,16 +30,16 @@ public class RoomBOImpl implements RoomBO {
 
     @Override
     public List<RoomDTO> searchRooms(String roomNo) throws SQLException, ClassNotFoundException {
-        List<Room> roomList = new ArrayList<>();
+        List<RoomDTO> roomList = new ArrayList<>();
         for (Room room : roomDAO.search(roomNo)) {
-            roomList.add(new Room(
+            roomList.add(new RoomDTO(
                     room.getRoomNo(),
                     room.getRoomType(),
                     room.getSleepCount(),
                     room.getCostPerDay()
             ));
         }
-        return null;
+        return roomList;
     }
 
     @Override

@@ -2,15 +2,10 @@ package com.edengardensigiriya.edengarden.controller;
 
 import com.edengardensigiriya.edengarden.bo.BOFactory;
 import com.edengardensigiriya.edengarden.bo.custom.TransportBO;
-import com.edengardensigiriya.edengarden.dao.DAOFactory;
-import com.edengardensigiriya.edengarden.dao.custom.PaymentDAO;
-import com.edengardensigiriya.edengarden.dao.custom.TransportDAO;
 import com.edengardensigiriya.edengarden.db.DBConnection;
 import com.edengardensigiriya.edengarden.dto.*;
 import com.edengardensigiriya.edengarden.dto.tm.TransportTM;
-import com.edengardensigiriya.edengarden.entity.Custom;
 import com.edengardensigiriya.edengarden.util.RegExPatterns;
-import com.edengardensigiriya.edengarden.util.SendEmail;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -26,7 +21,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -155,7 +149,6 @@ public class TransportManageFormController {
             if (isAffected) {
                 new Alert(Alert.AlertType.INFORMATION, "Transport Booking Successful!").showAndWait();
                 DBConnection.getInstance().getConnection().commit();
-                sendMail("Booking");
                 resetPage();
             } else {
                 new Alert(Alert.AlertType.WARNING, "Re-Check Submitted Details!").showAndWait();
@@ -181,7 +174,6 @@ public class TransportManageFormController {
                 }
                 if (isAffected) {
                     new Alert(Alert.AlertType.INFORMATION, "Transport Cancelled!").showAndWait();
-                    sendMail("Cancel");
                     transportIdTxt.setDisable(false);
                     custIdTxt.setDisable(false);
                     nameTxt.setDisable(false);
@@ -213,7 +205,6 @@ public class TransportManageFormController {
             }
             if (isAffected) {
                 new Alert(Alert.AlertType.INFORMATION, "Transport Updated!").showAndWait();
-                sendMail("Update");
                 transportIdTxt.setDisable(false);
                 custIdTxt.setDisable(false);
                 nameTxt.setDisable(false);
@@ -231,6 +222,7 @@ public class TransportManageFormController {
     }
 
     public void resetPage() throws SQLException, ClassNotFoundException {
+        transportIdTxt.setText("");
         custIdTxt.setText("");
         nameTxt.setText("");
         startTimeTxt.setText("");
@@ -245,13 +237,5 @@ public class TransportManageFormController {
             return true;
         }
         return false;
-    }
-
-    public void sendMail(String status) throws MessagingException, GeneralSecurityException, IOException, SQLException {
-        SendEmail.sendMail(transportBO.getEmail(custIdTxt.getText()),
-                (status.equals("Booking") ? "Transport Booking" : status.equals("Update") ? "Transport Booking Update" : "Transport Booking Cancellation"),
-                "Dear Customer,\nYour Transport ID:" + (status.equals("Booking") ? transportBO.getBookingId() : status.equals("Update") ? transportIdTxt.getText() : transportIdTxt.getText()) + "\nYour Customer ID:" + custIdTxt.getText() + "\nName:" + nameTxt.getText() +
-                        "\nRoom Number:" + "\nFrom:" + DateTimeDtPckr.getValue() + "  " + startTimeTxt.getText() + "\nDestination:" + destinationTxt.getText() + "\nTotal Cost:" + costTxt.getText() +
-                        "\n" + (status.equals("Booking") ? "Transport Booking Successful!" : status.equals("Update") ? "Transport Booking Update Successfully" : "Transport Booking Cancelled!" + "\n\nThank you for using our service!\n\nHotel Eden Garden,\nInamaluwa,\nSeegiriya"));
     }
 }

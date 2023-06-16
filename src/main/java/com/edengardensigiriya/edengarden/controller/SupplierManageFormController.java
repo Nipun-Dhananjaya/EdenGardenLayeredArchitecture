@@ -2,14 +2,11 @@ package com.edengardensigiriya.edengarden.controller;
 
 import com.edengardensigiriya.edengarden.bo.BOFactory;
 import com.edengardensigiriya.edengarden.bo.custom.SupplierBO;
-import com.edengardensigiriya.edengarden.dao.DAOFactory;
 import com.edengardensigiriya.edengarden.dao.custom.SupplierDAO;
 import com.edengardensigiriya.edengarden.db.DBConnection;
 import com.edengardensigiriya.edengarden.dto.*;
 import com.edengardensigiriya.edengarden.dto.tm.SupplierTM;
-import com.edengardensigiriya.edengarden.entity.Supplier;
 import com.edengardensigiriya.edengarden.util.RegExPatterns;
-import com.edengardensigiriya.edengarden.util.SendEmail;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -22,7 +19,6 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.sql.SQLException;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -128,7 +124,6 @@ public class SupplierManageFormController {
             if (isAffected) {
                 new Alert(Alert.AlertType.INFORMATION, "Supplier Added!").showAndWait();
                 DBConnection.getInstance().getConnection().commit();
-                sendMail("Add");
                 resetPage();
             } else {
                 new Alert(Alert.AlertType.WARNING, "Re-Check Submitted Details!").showAndWait();
@@ -153,7 +148,6 @@ public class SupplierManageFormController {
             if (isAffected) {
                 new Alert(Alert.AlertType.INFORMATION, "Supplier Updated!").showAndWait();
                 DBConnection.getInstance().getConnection().commit();
-                sendMail("Update");
                 idTxt.setDisable(false);
                 resetPage();
             } else {
@@ -179,7 +173,6 @@ public class SupplierManageFormController {
                 if (isAffected) {
                     new Alert(Alert.AlertType.INFORMATION, "Supplier Removed!").showAndWait();
                     DBConnection.getInstance().getConnection().commit();
-                    sendMail("Remove");
                     idTxt.setDisable(false);
                     resetPage();
                 } else {
@@ -246,12 +239,5 @@ public class SupplierManageFormController {
             return true;
         }
         return false;
-    }
-    public void sendMail(String status) throws MessagingException, GeneralSecurityException, IOException, SQLException {
-        SendEmail.sendMail(emailTxt.getText(),
-                (status.equals("Add")?"Register As Supplier!":status.equals("Update")?"Update Supplier Details!":"Remove Supplier"),
-                "Your Supplier ID:"+(status.equals("Add")?supplierBO.getSuppId():status.equals("Update")?idTxt.getText():idTxt.getText())+
-                        "\nItem Type:"+ itemTypeTxt.getText()+"\nContract Start From:"+startDtPckr.getValue()+"\nContract Valid To:"+endDtPckr.getValue()+
-                        "\n"+(status.equals("Add")?"Registered As Supplier Successfully!":status.equals("Update")?"Supplier Details Update Successfully":"Supplier Removed Successfully!"+"\n\nThank you!\n\nHotel Eden Garden,\nInamaluwa,\nSeegiriya"));
     }
 }

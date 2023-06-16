@@ -114,11 +114,6 @@ public class BookingBOImpl implements BookingBO {
     }
 
     @Override
-    public String getEmail(String custId) throws SQLException {
-        return bookingDAO.getEmail(custId);
-    }
-
-    @Override
     public String getBookingId() {
         return bookingDAO.getBookingId();
     }

@@ -94,11 +94,6 @@ public class TransportBOImpl implements TransportBO {
     }
 
     @Override
-    public String getEmail(String custId) throws SQLException {
-        return transportDAO.getEmail(custId);
-    }
-
-    @Override
     public String getBookingId() {
         return transportDAO.getBookingId();
     }

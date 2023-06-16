@@ -2,14 +2,11 @@ package com.edengardensigiriya.edengarden.controller;
 
 import com.edengardensigiriya.edengarden.bo.BOFactory;
 import com.edengardensigiriya.edengarden.bo.custom.CustomerBO;
-import com.edengardensigiriya.edengarden.dao.DAOFactory;
 import com.edengardensigiriya.edengarden.dao.custom.CustomerDAO;
 import com.edengardensigiriya.edengarden.db.DBConnection;
 import com.edengardensigiriya.edengarden.dto.CustomerDTO;
 import com.edengardensigiriya.edengarden.util.RegExPatterns;
-import com.edengardensigiriya.edengarden.util.SendEmail;
 import com.edengardensigiriya.edengarden.dto.tm.CustomerTM;
-import com.edengardensigiriya.edengarden.entity.Customer;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -21,8 +18,6 @@ import javax.mail.MessagingException;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.sql.SQLException;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -162,7 +157,6 @@ public class CustomerManageFormController{
                 System.out.println(456);
                 new Alert(Alert.AlertType.INFORMATION, "Customer Added!").showAndWait();
                 DBConnection.getInstance().getConnection().commit();
-                sendMail();
                 resetPage();
             } else {
                 System.out.println(789);
@@ -225,8 +219,8 @@ public class CustomerManageFormController{
         }
         return false;
     }
-    public void sendMail() throws MessagingException, GeneralSecurityException, IOException {
+    /*public void sendMail() throws MessagingException, GeneralSecurityException, IOException {
         SendEmail.sendMail(emailTxt.getText(),"Customer Verification","Dear Customer," +
                 "\nYour Customer ID:"+customer.getCustId()+"\nName:"+nameTxt.getText()+"\nRegistered time: "+ LocalDateTime.now()+"\n\nThank you for using our service!\n\nHotel Eden Garden,\nInamaluwa,\nSeegiriya");
-    }
+    }*/
 }

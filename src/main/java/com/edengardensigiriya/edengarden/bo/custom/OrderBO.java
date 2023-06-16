@@ -24,7 +24,5 @@ public interface OrderBO extends SuperBO {
 
     ObservableList<String> getAllDescription() throws SQLException;
 
-    String getEmail(String ordId) throws SQLException;
-
     String getOrderId();
 }

@@ -82,6 +82,7 @@ public class RentalBOImpl implements RentalBO {
 
     @Override
     public boolean saveRentals(RentalDTO rentalDTO) throws SQLException, ClassNotFoundException {
+        System.out.println(rentalDTO.getRentDuration());
         return rentalDAO.save(new Custom(rentalDTO.getRentId(), rentalDTO.getCustId(), rentalDTO.getRentFrom(), rentalDTO.getRentDuration(), rentalDTO.getPaymentId(), rentalDTO.getRentCost(),
                 rentalDTO.getVehicle(),rentalDTO.getVehicleType(),
                 rentalDTO.getVehicleId(),0,true));
@@ -95,8 +96,8 @@ public class RentalBOImpl implements RentalBO {
     }
 
     @Override
-    public void updateStatus() {
-
+    public void updateStatus() throws SQLException {
+        rentalDAO.updateStatus();
     }
 
     @Override
@@ -116,18 +117,13 @@ public class RentalBOImpl implements RentalBO {
 
     @Override
     public String getPaymentId(String RentalId) {
-        return null;
+        return rentalDAO.getPaymentId(RentalId);
     }
 
     @Override
     public boolean cancelRentals(RentalDTO rentalDTO) throws SQLException {
         return rentalDAO.cancelRental(new Custom(rentalDTO.getRentId(), rentalDTO.getCustId(),rentalDTO.getVehicle(),
                 rentalDTO.getVehicleId(), rentalDTO.getPaymentId(),rentalDTO.getRentStatus(),(float) 10.5));
-    }
-
-    @Override
-    public String getEmail(String custId) throws SQLException {
-        return rentalDAO.getEmail(custId);
     }
 
     @Override

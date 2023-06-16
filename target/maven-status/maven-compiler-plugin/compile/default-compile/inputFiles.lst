@@ -15,7 +15,6 @@ G:\GDSE 65\Software Architectures\Projects\Project\src\main\java\com\edengardens
 G:\GDSE 65\Software Architectures\Projects\Project\src\main\java\com\edengardensigiriya\edengarden\controller\SettingsFormController.java
 G:\GDSE 65\Software Architectures\Projects\Project\src\main\java\com\edengardensigiriya\edengarden\bo\custom\ItemBO.java
 G:\GDSE 65\Software Architectures\Projects\Project\src\main\java\com\edengardensigiriya\edengarden\dao\custom\impl\RentalDAOImpl.java
-G:\GDSE 65\Software Architectures\Projects\Project\src\main\java\com\edengardensigiriya\edengarden\util\SendEmail.java
 G:\GDSE 65\Software Architectures\Projects\Project\src\main\java\com\edengardensigiriya\edengarden\db\DBConnection.java
 G:\GDSE 65\Software Architectures\Projects\Project\src\main\java\com\edengardensigiriya\edengarden\bo\custom\CarBO.java
 G:\GDSE 65\Software Architectures\Projects\Project\src\main\java\com\edengardensigiriya\edengarden\dto\tm\CarTM.java

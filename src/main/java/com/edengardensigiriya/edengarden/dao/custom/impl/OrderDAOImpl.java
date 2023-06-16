@@ -157,25 +157,6 @@ public class OrderDAOImpl implements OrderDAO {
     }
 
     @Override
-    public String getEmail(String id) throws SQLException {
-        try {
-            DBConnection.getInstance().getConnection().setAutoCommit(false);
-            ResultSet resultSet=CrudUtil.execute("SELECT supp_email FROM supplier WHERE supp_id=?;",id);
-            String tempIds="";
-            while (resultSet.next()){
-                tempIds=resultSet.getString(1);
-            }
-            DBConnection.getInstance().getConnection().commit();
-            return tempIds;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            DBConnection.getInstance().getConnection().rollback();
-            DBConnection.getInstance().getConnection().setAutoCommit(true);
-            return "";
-        }
-    }
-
-    @Override
     public String getOrderId() {
         ResultSet result=null;
         String id="";

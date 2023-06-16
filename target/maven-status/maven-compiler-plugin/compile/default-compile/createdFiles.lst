@@ -43,7 +43,6 @@ com\edengardensigiriya\edengarden\controller\FilterCustomerFormController.class
 com\edengardensigiriya\edengarden\entity\Payment.class
 com\edengardensigiriya\edengarden\bo\custom\impl\ChangeUserBOImpl.class
 com\edengardensigiriya\edengarden\bo\custom\OrderBO.class
-com\edengardensigiriya\edengarden\util\SendEmail.class
 com\edengardensigiriya\edengarden\dao\custom\RoomDAO.class
 com\edengardensigiriya\edengarden\dto\BookingDTO.class
 com\edengardensigiriya\edengarden\dao\custom\CarDAO.class

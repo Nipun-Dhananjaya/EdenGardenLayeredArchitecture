@@ -9,7 +9,6 @@ public interface TransportDAO extends CrudDAO<Custom,String> {
     public String setNextIdValue(int number);
     public String searchCustomer(String custId);
     public String getPaymentId(String bookingId);
-    public String getEmail(String id) throws SQLException;
     public String getBookingId();
     public boolean cancelTransport(Custom entity) throws SQLException;
     void  updateStatus() throws SQLException;

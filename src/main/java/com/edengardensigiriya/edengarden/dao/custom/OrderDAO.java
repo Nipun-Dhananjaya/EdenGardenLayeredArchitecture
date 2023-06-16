@@ -8,7 +8,6 @@ import java.util.List;
 
 public interface OrderDAO extends CrudDAO<Custom,String> {
     public String setNextIdValue(int number);
-    public String getEmail(String id) throws SQLException;
     public String getOrderId();
     public boolean cancelOrder(String ordId) throws SQLException;
     List<Custom> getAllItemsOfOrder(String ordId) throws SQLException;

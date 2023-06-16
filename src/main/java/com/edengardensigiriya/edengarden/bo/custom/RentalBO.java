@@ -15,7 +15,7 @@ public interface RentalBO extends SuperBO {
 
     boolean updateRentals(RentalDTO RentalDTO) throws SQLException, ClassNotFoundException;
 
-    void updateStatus();
+    void updateStatus() throws SQLException;
 
     String searchCustomer(String custId);
 
@@ -26,8 +26,6 @@ public interface RentalBO extends SuperBO {
     String getPaymentId(String RentalId);
 
     boolean cancelRentals(RentalDTO RentalDTO) throws SQLException;
-
-    String getEmail(String custId) throws SQLException;
 
     String getRentalId();
     List<RentalDTO> loadAllAvailableVehicles(String vehicle,String vehicleType) throws SQLException, ClassNotFoundException;

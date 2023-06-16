@@ -115,11 +115,6 @@ public class OrderBOImpl implements OrderBO {
     }
 
     @Override
-    public String getEmail(String ordId) throws SQLException {
-        return orderDAO.getEmail(ordId);
-    }
-
-    @Override
     public String getOrderId() {
         return orderDAO.getOrderId();
     }

@@ -2,15 +2,10 @@ package com.edengardensigiriya.edengarden.controller;
 
 import com.edengardensigiriya.edengarden.bo.BOFactory;
 import com.edengardensigiriya.edengarden.bo.custom.RentalBO;
-import com.edengardensigiriya.edengarden.dao.DAOFactory;
-import com.edengardensigiriya.edengarden.dao.custom.PaymentDAO;
-import com.edengardensigiriya.edengarden.dao.custom.RentalDAO;
 import com.edengardensigiriya.edengarden.db.DBConnection;
 import com.edengardensigiriya.edengarden.dto.*;
 import com.edengardensigiriya.edengarden.dto.tm.RentalTM;
-import com.edengardensigiriya.edengarden.entity.Custom;
 import com.edengardensigiriya.edengarden.util.RegExPatterns;
-import com.edengardensigiriya.edengarden.util.SendEmail;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -73,6 +68,7 @@ public class RentalManageFormController {
     RentalBO rentalBO= (RentalBO) BOFactory.getBoFactory().getBO(BOFactory.BOTypes.RENTAL);
 
     public void initialize() throws SQLException, ClassNotFoundException {
+        vehicleType.clear();
         vehicleType.add("Bicycle");
         vehicleType.add("Car");
         ObservableList<String> Type = FXCollections.observableList(vehicleType);
@@ -214,7 +210,6 @@ public class RentalManageFormController {
                 }
                 if (isAffected) {
                     new Alert(Alert.AlertType.INFORMATION, "Rental Cancelled!").showAndWait();
-                    sendMail("Cancel");
                     bookingIdTxt.setDisable(false);
                     custIdTxt.setDisable(false);
                     nameTxt.setDisable(false);
@@ -242,13 +237,13 @@ public class RentalManageFormController {
             String paymentId = rentalBO.getPaymentId(bookingId);
             boolean isAffected=false;
             if (isCorrectPattern()){
+                System.out.println("correct");
                 isAffected=rentalBO.updateRentals(new RentalDTO(bookingId, custIdTxt.getText(), String.valueOf(startDate), String.valueOf(duration), paymentId,
                         String.valueOf(vehicleCmbBx.getValue()),String.valueOf(vehicleTypeCmbBx.getValue()),
                         String.valueOf(vehicleIdCmbBx.getValue()), String.valueOf(costTxt.getText()),true));
             }
             if (isAffected) {
                 new Alert(Alert.AlertType.INFORMATION, "Rental Updated!").showAndWait();
-                sendMail("Update");
                 bookingIdTxt.setDisable(false);
                 custIdTxt.setDisable(false);
                 nameTxt.setDisable(false);
@@ -275,14 +270,14 @@ public class RentalManageFormController {
             String paymentId = rentalBO.newPayIdGenerate();
             String rentalId = rentalBO.newRentIdGenerate();
             boolean isAffected=false;
-            if (isCorrectPattern()){
+                if (isCorrectPattern()){
+                    System.out.println(costTxt.getText());
                 isAffected=rentalBO.saveRentals(new RentalDTO(rentalId, custIdTxt.getText(), String.valueOf(startDate), String.valueOf(duration), paymentId, costTxt.getText(),
                         String.valueOf(vehicleCmbBx.getSelectionModel().getSelectedItem()),String.valueOf(vehicleTypeCmbBx.getSelectionModel().getSelectedItem()),
                         String.valueOf(vehicleIdCmbBx.getSelectionModel().getSelectedItem()),0,true));
             }
             if (isAffected) {
                 new Alert(Alert.AlertType.INFORMATION, "Rental Made Successfully!").showAndWait();
-                sendMail("Booking");
                 resetPage();
             } else {
                 new Alert(Alert.AlertType.WARNING, "Re-Check Submitted Details!").showAndWait();
@@ -361,12 +356,5 @@ public class RentalManageFormController {
             return true;
         }
         return false;
-    }
-    public void sendMail(String status) throws MessagingException, GeneralSecurityException, IOException, SQLException {
-        SendEmail.sendMail(rentalBO.getEmail(custIdTxt.getText()),
-                (status.equals("Booking")?"Rent A Vehicle":status.equals("Update")?"Rental Update":"Rental Cancellation"),
-                "Dear Customer,\nYour Rental ID:"+(status.equals("Booking")?rentalBO.getRentalId():status.equals("Update")?bookingIdTxt.getText():bookingIdTxt.getText())+"\nYour Customer ID:"+custIdTxt.getText()+"\nName:"+nameTxt.getText()+
-                        "\nVehicle Type:"+ vehicleCmbBx.getSelectionModel().getSelectedItem()+"\nVehicle Model:"+ vehicleTypeCmbBx.getSelectionModel().getSelectedItem()+"\nVehicle ID:"+ vehicleIdCmbBx.getSelectionModel().getSelectedItem()+"\nFrom:"+startDateDtPckr.getValue()+"  "+startTimeTxt.getText()+"\nDuration: "+durationTxt.getText()+"\nTotal Cost:"+ costTxt.getText()+
-                        "\n"+(status.equals("Booking")?"Rent Successful!":status.equals("Update")?"Rental Update Successfully":"Vehicle Rental Cancelled!"+"\n\nThank you for using our service!\n\nHotel Eden Garden,\nInamaluwa,\nSeegiriya"));
     }
 }

@@ -22,9 +22,10 @@ public class RentalDAOImpl implements RentalDAO {
         boolean isAddedVehicleRental = false;
         boolean isAddedVehicle = false;
         try {
+            System.out.println(entity.getRentCost());
             boolean isAddedPayment = CrudUtil.execute("INSERT INTO payment VALUES(?,?,?,?,?);", entity.getPaymentId(), Double.parseDouble(entity.getRentCost()), LocalDateTime.now(), "Rental","Paid");
-            boolean isAddedRental = CrudUtil.execute("INSERT INTO rental VALUES (?,?,?,?,?,?);", entity.getRentId(), entity.getRentFrom(), String.valueOf(entity.getDuration()), entity.getPaymentId(), entity.getCustId(),"Active");
-            if (entity.getVehicleType().equals("Car")) {
+            boolean isAddedRental = CrudUtil.execute("INSERT INTO rental VALUES (?,?,?,?,?,?);", entity.getRentId(), entity.getRentFrom(), String.valueOf(entity.getRentDuration()), entity.getPaymentId(), entity.getCustId(),"Active");
+            if (entity.getVehicle().equals("Car")) {
                 isAddedVehicleRental = CrudUtil.execute("INSERT INTO car_rental VALUES (?,?,?);", entity.getVehicleId(), entity.getRentId(), LocalDateTime.now());
                 isAddedVehicle = CrudUtil.execute("UPDATE car SET status=? WHERE car_reg_num=?;", "Booked",entity.getVehicleId());
             } else {
@@ -46,10 +47,16 @@ public class RentalDAOImpl implements RentalDAO {
     public boolean update(Custom entity) throws SQLException, ClassNotFoundException {
         try {
             boolean isAddedPayment = CrudUtil.execute("UPDATE payment SET paid_amount=? WHERE pay_id=?;", Double.parseDouble(entity.getRentCost()),entity.getPaymentId());
-            boolean isAddedRental = CrudUtil.execute("UPDATE rental SET rental_takeover_date_time=?,rented_duration=? WHERE rental_id=?;", entity.getRentFrom(), String.valueOf(entity.getDuration()), entity.getRentId());
+            boolean isAddedRental = CrudUtil.execute("UPDATE rental SET rental_takeover_date_time=?,rented_duration=? WHERE rental_id=?;", entity.getRentFrom(), String.valueOf(entity.getRentDuration()), entity.getRentId());
+            System.out.println("payId:"+entity.getPaymentId());
+            System.out.println("payCost:"+entity.getRentCost());
+            System.out.println("pay:"+isAddedPayment);
+            System.out.println("rent:"+isAddedRental);
             if (isAddedPayment & isAddedRental ) {
+                System.out.println("updateAffected");
                 return true;
             } else {
+                System.out.println("updateNotAffected");
                 return false;
             }
         } catch (SQLException e) {
@@ -160,25 +167,6 @@ public class RentalDAOImpl implements RentalDAO {
             return paymentId;
         } catch (SQLException e) {
             return null;
-        }
-    }
-
-    @Override
-    public String getEmail(String id) throws SQLException {
-        try {
-            DBConnection.getInstance().getConnection().setAutoCommit(false);
-            ResultSet resultSet=CrudUtil.execute("SELECT cust_email FROM customer WHERE cust_id=?;",id);
-            String tempIds="";
-            while (resultSet.next()){
-                tempIds=resultSet.getString(1);
-            }
-            DBConnection.getInstance().getConnection().commit();
-            return tempIds;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            DBConnection.getInstance().getConnection().rollback();
-            DBConnection.getInstance().getConnection().setAutoCommit(true);
-            return "";
         }
     }
 

@@ -2,17 +2,11 @@ package com.edengardensigiriya.edengarden.controller;
 
 import com.edengardensigiriya.edengarden.bo.BOFactory;
 import com.edengardensigiriya.edengarden.bo.custom.OrderBO;
-import com.edengardensigiriya.edengarden.dao.DAOFactory;
-import com.edengardensigiriya.edengarden.dao.custom.ItemDAO;
-import com.edengardensigiriya.edengarden.dao.custom.OrderDAO;
 import com.edengardensigiriya.edengarden.db.DBConnection;
 import com.edengardensigiriya.edengarden.dto.*;
 import com.edengardensigiriya.edengarden.dto.tm.OrderItemTM;
 import com.edengardensigiriya.edengarden.dto.tm.OrderTM;
-import com.edengardensigiriya.edengarden.entity.Custom;
-import com.edengardensigiriya.edengarden.entity.Item;
 import com.edengardensigiriya.edengarden.util.RegExPatterns;
-import com.edengardensigiriya.edengarden.util.SendEmail;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -155,7 +149,6 @@ public class OrderManageFormController {
             if (isAffected) {
                 new Alert(Alert.AlertType.INFORMATION, "Order Placed!").showAndWait();
                 DBConnection.getInstance().getConnection().commit();
-                sendMail("Order");
                 resetPage();
             } else {
                 new Alert(Alert.AlertType.WARNING, "Re-Check Submitted Details!").showAndWait();
@@ -195,7 +188,6 @@ public class OrderManageFormController {
                 if (isAffected) {
                     new Alert(Alert.AlertType.INFORMATION, "Order Cancelled!").showAndWait();
                     DBConnection.getInstance().getConnection().commit();
-                    sendMail("Cancel");
                     bookingIdTxt.setDisable(false);
                     suppIdTxt.setDisable(false);
                     resetPage();
@@ -226,7 +218,6 @@ public class OrderManageFormController {
                 System.out.println("Affected");
                 new Alert(Alert.AlertType.INFORMATION, "Order Updated!").showAndWait();
                 DBConnection.getInstance().getConnection().commit();
-                sendMail("Update");
                 bookingIdTxt.setDisable(false);
                 suppIdTxt.setDisable(false);
                 resetPage();
@@ -294,14 +285,14 @@ public class OrderManageFormController {
         System.out.println("Not validate");
         return false;
     }
-    public void sendMail(String status) throws MessagingException, GeneralSecurityException, IOException, SQLException {
+    /*public void sendMail(String status) throws MessagingException, GeneralSecurityException, IOException, SQLException {
         SendEmail.sendMail(orderBO.getEmail(suppIdTxt.getText()),(status.equals("Order")?"Hotel Eden Garden Order":
                         status.equals("Update")?"Hotel Eden Garden Order Update":"Hotel Eden Garden Order Cancellation"),
                 "Your Order ID:"+(status.equals("Order")?orderBO.getOrderId():
                         status.equals("Update")?bookingIdTxt.getText():bookingIdTxt.getText())+"\nOrder List:\n"+setItemList()
                         +"\n\nOrder Placed time: "+ LocalDateTime.now()+"\nOrder Deliver Date: "+deliverDateDtPckr.getValue()
                         +"  "+deliverTimeTxt.getText()+"\n"+(status.equals("Order")?"Order Placed!":status.equals("Update")?"Order Updated!":"Order Cancelled!"+"\n\nThank you!\n\nHotel Eden Garden,\nInamaluwa,\nSeegiriya"));
-    }
+    }*/
 
     private String setItemList() throws SQLException {
         List<OrderItemDTO> ordItmList = orderBO.getAllItemsOfOrder(bookingIdTxt.getText());

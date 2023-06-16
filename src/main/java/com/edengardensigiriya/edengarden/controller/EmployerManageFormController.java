@@ -2,14 +2,11 @@ package com.edengardensigiriya.edengarden.controller;
 
 import com.edengardensigiriya.edengarden.bo.BOFactory;
 import com.edengardensigiriya.edengarden.bo.custom.EmployerBO;
-import com.edengardensigiriya.edengarden.dao.DAOFactory;
 import com.edengardensigiriya.edengarden.dao.custom.EmployerDAO;
 import com.edengardensigiriya.edengarden.db.DBConnection;
 import com.edengardensigiriya.edengarden.dto.*;
 import com.edengardensigiriya.edengarden.dto.tm.EmployerTM;
-import com.edengardensigiriya.edengarden.entity.Employer;
 import com.edengardensigiriya.edengarden.util.RegExPatterns;
-import com.edengardensigiriya.edengarden.util.SendEmail;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -22,7 +19,6 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.sql.SQLException;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -155,7 +151,6 @@ public class EmployerManageFormController {
             if (isAffected) {
                 new Alert(Alert.AlertType.INFORMATION, "Employer Added!").showAndWait();
                 DBConnection.getInstance().getConnection().commit();
-                sendMail("Add");
                 resetPage();
             } else {
                 new Alert(Alert.AlertType.WARNING, "Re-Check Submitted Details!").showAndWait();
@@ -180,7 +175,6 @@ public class EmployerManageFormController {
             if (isAffected) {
                 new Alert(Alert.AlertType.INFORMATION, "Employer Updated!").showAndWait();
                 DBConnection.getInstance().getConnection().commit();
-                sendMail("Update");
                 idTxt.setDisable(false);
                 resetPage();
             } else {
@@ -253,11 +247,11 @@ public class EmployerManageFormController {
         }
         return false;
     }
-    public void sendMail(String status) throws MessagingException, GeneralSecurityException, IOException, SQLException {
+    /*public void sendMail(String status) throws MessagingException, GeneralSecurityException, IOException, SQLException {
         SendEmail.sendMail(emailTxt.getText(),
                 (status.equals("Add")?"Register As Employer!":"Update Employer Details!"),
                 "Your Employer ID:"+(status.equals("Add")? employerBO.getEmpId():idTxt.getText())+"\nName:"+nameTxt.getText()+
                         "\nNIC: "+ nicTxt.getText()+"\nJob Role: "+ jobRolTxt.getText()+"\nService Start From:"+strtDtDtPck.getValue()+"\nService End:"+endDtPkr.getValue()+
                         "\n"+(status.equals("Add")?"Registered As Supplier Successfully!":"Employer Details Update Successfully"+"\n\nThank you!\n\nHotel Eden Garden,\nInamaluwa,\nSeegiriya"));
-    }
+    }*/
 }
